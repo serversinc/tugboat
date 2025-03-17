@@ -69,7 +69,6 @@ export class HeartbeatService {
         {
           containers,
           usage,
-          hostname: os.hostname(),
         },
         {
           headers: {
