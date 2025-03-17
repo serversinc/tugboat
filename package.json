@@ -1,0 +1,28 @@
+{
+  "name": "tugboat",
+  "version": "1.0.0",
+  "description": "A node.js agent for managing remote Docker containers.",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon --exec ts-node src/app.ts",
+    "build": "tsc",
+    "start": "node dist/app.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@hono/node-server": "^1.13.8",
+    "dockerode": "^4.0.4",
+    "dotenv": "^16.4.7",
+    "hono": "^4.7.4",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/dockerode": "^3.3.35",
+    "@types/node": "^22.13.9",
+    "nodemon": "^3.1.9",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.2"
+  }
+}
