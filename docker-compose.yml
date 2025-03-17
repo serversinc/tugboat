@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  tugboat:
+    container_name: tugboat
+    image: tugboat:latest
+    build: .
+    env_file:
+      - .env
+    ports:
+      - "7567:7567"
+    volumes:
+       - /var/run/docker.sock:/var/run/docker.sock
+       - //./pipe/docker_engine://./pipe/docker_engine
