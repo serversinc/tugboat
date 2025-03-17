@@ -67,6 +67,7 @@ export class HeartbeatService {
       const response = await axios.post(
         process.env.TUGBOAT_PHONE_HOME_URL as string,
         {
+          type: "heartbeat",
           containers,
           usage,
         },
