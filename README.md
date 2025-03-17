@@ -22,6 +22,7 @@ TUGBOAT_PORT=7567
 TUGBOAT_SECRET_KEY=your_secret_key
 TUGBOAT_PHONE_HOME_INTERVAL=60000
 TUGBOAT_PHONE_HOME_URL=http://your_server:your_port/events
+TUGBOAT_DOCKER_PLATFORM=unix
 ```
 
 3. Run the image:
@@ -56,6 +57,7 @@ curl -X GET http://localhost:7567/v1/containers/:id
 - `TUGBOAT_SECRET_KEY`: The secret key for authenticating requests to the agent
 - `TUGBOAT_PHONE_HOME_INTERVAL`: The interval at which the agent will send a heartbeat to your server.
 - `TUGBOAT_PHONE_HOME_URL`: The URL to which the agent will send a heartbeat.
+- `DOCKER_PLATFORM`: The platform on which the agent is running, leave empty for Linux. Only needed for local development or windows platforms.
 
 ## Contributing
 

@@ -14,8 +14,14 @@ export class Application {
   }
 
   start() {
-    serve(this.app, info => {
-      console.log(`Server listening on http://localhost:${info.port}`);
-    });
+    serve(
+      {
+        port: process.env.TUGBOAT_PORT ? parseInt(process.env.TUGBOAT_PORT) : 3000,
+        fetch: this.app.fetch.bind(this.app),
+      },
+      info => {
+        console.log(`Server listening on http://localhost:${info.port}`);
+      }
+    );
   }
 }
