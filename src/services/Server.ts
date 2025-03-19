@@ -1,7 +1,10 @@
 import { Hono } from "hono";
-import { ContainerController } from "../controllers/ContainerController";
 import { serve } from "@hono/node-server";
+import { zValidator } from "@hono/zod-validator";
+
 import { ImageController } from "../controllers/ImageController";
+import { ContainerController } from "../controllers/ContainerController";
+import { createContainerSchema } from "../validators/Containers";
 
 export class Application {
   private app: Hono;
@@ -11,7 +14,7 @@ export class Application {
 
     this.app.get("/containers", containerController.list.bind(containerController));
     this.app.get("/containers/:id", containerController.get.bind(containerController));
-    this.app.post("/containers", containerController.create.bind(containerController));
+    this.app.post("/containers", zValidator("json", createContainerSchema), containerController.create.bind(containerController));
     this.app.delete("/containers/:id", containerController.remove.bind(containerController));
     this.app.post("/containers/:id/start", containerController.start.bind(containerController));
     this.app.post("/containers/:id/stop", containerController.stop.bind(containerController));
