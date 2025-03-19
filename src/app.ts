@@ -10,6 +10,7 @@ import { ContainerController } from "./controllers/ContainerController";
 import { DockerService } from "./services/Docker";
 import { HeartbeatService } from "./services/Heartbeat";
 import { checkEnv } from "./utils/env";
+import { ImageController } from "./controllers/ImageController";
 
 dotenv.config();
 checkEnv();
@@ -23,6 +24,8 @@ if (process.env.TUGBOAT_PHONE_HOME_INTERVAL && process.env.TUGBOAT_PHONE_HOME_UR
 }
 
 const containerController = new ContainerController(dockerService);
-const application = new Application(containerController);
+const imageController = new ImageController(dockerService);
+
+const application = new Application(containerController, imageController);
 
 application.start();

@@ -22,6 +22,25 @@ export class DockerService {
     return containers.map(container => normalizeContainer(container));
   }
 
+  async getContainer(id: string): Promise<Docker.ContainerInspectInfo> {
+    const container = this.docker.getContainer(id);
+    return await container.inspect();
+  }
+
+  async createContainer(options: Docker.ContainerCreateOptions): Promise<Docker.Container> {
+    return await this.docker.createContainer(options);
+  }
+
+  async removeContainer(id: string): Promise<void> {
+    const container = this.docker.getContainer(id);
+    await container.remove();
+  }
+
+  async restartContainer(id: string): Promise<void> {
+    const container = this.docker.getContainer(id);
+    await container.restart();
+  }
+
   async startContainer(id: string): Promise<void> {
     const container = this.docker.getContainer(id);
     await container.start();
@@ -30,5 +49,40 @@ export class DockerService {
   async stopContainer(id: string): Promise<void> {
     const container = this.docker.getContainer(id);
     await container.stop();
+  }
+
+  /** IMAGES */
+  async listImages(): Promise<Docker.ImageInfo[]> {
+    return await this.docker.listImages();
+  }
+
+  async getImage(id: string): Promise<Docker.ImageInspectInfo> {
+    return await this.docker.getImage(id).inspect();
+  }
+
+  async pullImage(name: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.docker.pull(name, (err: any, stream: any) => {
+        if (err) {
+          reject(err);
+        }
+
+        this.docker.modem.followProgress(stream, (err, output) => {
+          if (err) {
+            reject(err);
+          }
+
+          resolve();
+        });
+      });
+    });
+  }
+
+  async removeImage(id: string): Promise<void> {
+    return await this.docker.getImage(id).remove();
+  }
+
+  async pruneImages(): Promise<Docker.PruneImagesInfo> {
+    return await this.docker.pruneImages();
   }
 }
