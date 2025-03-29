@@ -5,12 +5,12 @@ import { Application } from "./services/Server";
 
 // Controllers
 import { ContainerController } from "./controllers/ContainerController";
+import { ImageController } from "./controllers/ImageController";
 
 // Services
 import { DockerService } from "./services/Docker";
 import { HeartbeatService } from "./services/Heartbeat";
 import { checkEnv } from "./utils/env";
-import { ImageController } from "./controllers/ImageController";
 
 dotenv.config();
 checkEnv();
