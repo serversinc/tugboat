@@ -1,8 +1,6 @@
 import { Context } from "hono";
 import { DockerService } from "../services/Docker";
 
-import Docker from "dockerode";
-
 export class ContainerController {
   private docker: DockerService;
 
@@ -12,8 +10,6 @@ export class ContainerController {
     }
 
     this.docker = dockerService;
-
-    console.log("Container controller initialized");
   }
 
   /**
@@ -23,7 +19,6 @@ export class ContainerController {
    */
   async list(ctx: Context) {
     try {
-      console.log("Listing containers");
       const containers = await this.docker.listContainers();
       return ctx.json(containers);
     } catch (err) {
@@ -54,10 +49,31 @@ export class ContainerController {
    */
   async create(ctx: Context) {
     try {
-      const options = ctx.req.json() as Docker.ContainerCreateOptions;
-      const container = await this.docker.createContainer(options);
-      return ctx.json(container);
+      // createContainerSchema
+      const options = await ctx.req.json();
+
+      // Check if image exists
+      const imageExists = await this.docker.checkImageExists(options.image);
+
+      if (!imageExists) {
+        await this.docker.pullImage(options.image);
+      }
+
+      const container = await this.docker.createContainer({
+        name: options.name,
+        Image: options.image,
+        Env: options.environment,
+      });
+
+      if (options.start) {
+        await this.docker.startContainer(container.id);
+      }
+
+      const containerInfo = await this.docker.getContainer(container.id);
+
+      return ctx.json(containerInfo);
     } catch (err) {
+      console.log(err);
       return ctx.json({ error: (err as Error).message }, 500);
     }
   }
