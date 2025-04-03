@@ -12,8 +12,6 @@ export class ImageController {
     }
 
     this.docker = dockerService;
-
-    console.log("Image controller initialized");
   }
 
   /**

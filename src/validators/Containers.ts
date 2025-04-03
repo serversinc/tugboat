@@ -2,19 +2,20 @@ import { z } from "zod";
 
 export const createContainerSchema = z.object({
   name: z.string(),
-  Env: z.array(z.string()).optional(),
-  ExposedPorts: z.record(z.object({}).optional()).optional(),
-  Image: z.string(),
-  Labels: z.record(z.string()).optional(),
-  HostConfig: z
+  environment: z.array(z.string()).optional(),
+  ports: z.record(z.object({}).optional()).optional(),
+  image: z.string(),
+  label: z.record(z.string()).optional(),
+  hostConfig: z
     .object({
       NetworkMode: z.string().optional(),
       PortBindings: z.record(z.array(z.object({ HostPort: z.string() }))).optional(),
       AutoRemove: z.boolean().optional(),
     })
     .optional(),
-  Tty: z.boolean().optional(),
-  Cmd: z.array(z.string()).optional(),
-  Entrypoint: z.string().optional(),
-  WorkingDir: z.string().optional(),
+  tty: z.boolean().optional(),
+  cmd: z.array(z.string()).optional(),
+  entrypoint: z.string().optional(),
+  workingdir: z.string().optional(),
+  start: z.boolean().optional(),
 });

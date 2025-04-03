@@ -85,4 +85,16 @@ export class DockerService {
   async pruneImages(): Promise<Docker.PruneImagesInfo> {
     return await this.docker.pruneImages();
   }
+
+  async checkImageExists(id: string): Promise<boolean> {
+    try {
+      await this.docker.getImage(id).inspect();
+      return true;
+    } catch (err: any) {
+      if (err.statusCode === 404) {
+        return false;
+      }
+      throw err;
+    }
+  }
 }
