@@ -1,5 +1,9 @@
 import { Context } from "hono";
+import { streamSSE } from "hono/streaming";
+
 import { DockerService } from "../services/Docker";
+import { stripAnsiCodes } from "../utils/transformers";
+import { PassThrough } from "stream";
 
 export class ContainerController {
   private docker: DockerService;
@@ -133,6 +137,54 @@ export class ContainerController {
       const id = ctx.req.param("id");
       await this.docker.stopContainer(id);
       return ctx.json({ message: "Container stopped" });
+    } catch (err) {
+      return ctx.json({ error: (err as Error).message }, 500);
+    }
+  }
+
+  /**
+   * Stream logs from a container
+   */
+  async logs(ctx: Context) {
+    try {
+      const id = ctx.req.param("id");
+
+      const container = this.docker.docker.getContainer(id);
+
+      if (!container) {
+        return ctx.json({ error: "Container not found" }, 404);
+      }
+
+      const logs = await container.logs({
+        follow: true,
+        stdout: true,
+        stderr: true,
+        since: 0,
+        timestamps: false,
+      });
+
+      // Create two clean output streams
+      const stdout = new PassThrough();
+      const stderr = new PassThrough();
+
+      // Demux the stream
+      this.docker.docker.modem.demuxStream(logs, stdout, stderr);
+
+      const decoder = new TextDecoder();
+
+      return streamSSE(ctx, async stream => {
+        for await (const chunk of stdout) {
+          const message = decoder.decode(chunk);
+          const clean = stripAnsiCodes(message);
+          await stream.writeSSE({ data: `[stdout] ${clean}` });
+        }
+
+        for await (const chunk of stderr) {
+          const message = decoder.decode(chunk);
+          const clean = stripAnsiCodes(message);
+          await stream.writeSSE({ data: `[stderr] ${clean}` });
+        }
+      });
     } catch (err) {
       return ctx.json({ error: (err as Error).message }, 500);
     }

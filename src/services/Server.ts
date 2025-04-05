@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { cors } from "hono/cors";
 import { serve } from "@hono/node-server";
 import { zValidator } from "@hono/zod-validator";
 
@@ -13,6 +14,8 @@ export class Application {
   constructor(containerController: ContainerController, imageController: ImageController) {
     this.app = new Hono();
 
+    this.app.use(cors())
+
     // Containers
     this.app.get("/containers", containerController.list.bind(containerController));
     this.app.get("/containers/:id", containerController.get.bind(containerController));
@@ -23,6 +26,9 @@ export class Application {
     this.app.post("/containers/:id/start", containerController.start.bind(containerController));
     this.app.post("/containers/:id/stop", containerController.stop.bind(containerController));
     this.app.post("/containers/:id/restart", containerController.restart.bind(containerController));
+
+    // Logs
+    this.app.get("/containers/:id/logs", containerController.logs.bind(containerController));
 
     // Images
     this.app.get("/images", imageController.list.bind(imageController));

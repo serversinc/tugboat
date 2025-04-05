@@ -38,5 +38,16 @@ export function normalizeContainer(container: ContainerInfo) {
       gateway: container.NetworkSettings.Networks[key].Gateway,
       aliases: container.NetworkSettings.Networks[key].Aliases,
     })),
-  }
+  };
+}
+
+/**
+ * Strips ANSI codes from a string
+ * @param input String with ANSI codes
+ * @returns String without ANSI codes
+ * @example
+ * stripAnsiCodes("\x1b[31mHello\x1b[0m") // "Hello"
+ */
+export function stripAnsiCodes(input: string): string {
+  return input.replace(/\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/g, "");
 }
