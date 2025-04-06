@@ -18,7 +18,9 @@ export class DockerService {
   }
 
   async listContainers(): Promise<any[]> {
-    const containers = await this.docker.listContainers();
+    const containers = await this.docker.listContainers({
+      all: true,
+    });
     return containers.map(container => normalizeContainer(container));
   }
 
