@@ -3,9 +3,9 @@ import { z } from "zod";
 export const createContainerSchema = z.object({
   name: z.string(),
   environment: z.array(z.string()).optional(),
-  ports: z.record(z.object({}).optional()).optional(),
+  ports: z.array(z.string()).optional(),
   image: z.string(),
-  label: z.record(z.string()).optional(),
+  labels: z.record(z.string().optional()).optional(),
   hostConfig: z
     .object({
       NetworkMode: z.string().optional(),
