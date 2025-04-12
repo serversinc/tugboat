@@ -66,6 +66,8 @@ export class ContainerController {
 
       const ports = parsePortString(options.ports);
 
+      console.log(ports);
+
       const container = await this.docker.createContainer({
         name: options.name,
         Image: options.image,
@@ -81,10 +83,20 @@ export class ContainerController {
 
       const containerInfo = await this.docker.getContainer(container.id);
 
-      return ctx.json(containerInfo);
+      return ctx.json({
+        success: true,
+        message: `Container ${containerInfo.Name} created successfully`,
+        container: containerInfo,
+      });
     } catch (err) {
       console.log(err);
-      return ctx.json({ error: (err as Error).message }, 500);
+      return ctx.json(
+        {
+          success: false,
+          error: (err as Error).message,
+        },
+        500
+      );
     }
   }
 

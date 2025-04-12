@@ -64,18 +64,30 @@ export class DockerService {
 
   async pullImage(name: string): Promise<void> {
     return new Promise((resolve, reject) => {
+      console.log(`Attempting to pull image: ${name}`);
       this.docker.pull(name, (err: any, stream: any) => {
         if (err) {
-          reject(err);
+          console.error(`Error initiating pull for image ${name}:`, err);
+          return reject(err);
         }
 
-        this.docker.modem.followProgress(stream, (err, output) => {
-          if (err) {
-            reject(err);
-          }
+        this.docker.modem.followProgress(
+          stream,
+          (err, output) => {
+            if (err) {
+              console.error(`Error during followProgress for image ${name}:`, err);
+              return reject(err);
+            }
 
-          resolve();
-        });
+            console.log(`Image ${name} pulled successfully.`);
+            resolve();
+          },
+          (event: any) => {
+            if (event && event.status) {
+              console.log(`Pull progress: ${event.status}`);
+            }
+          }
+        );
       });
     });
   }

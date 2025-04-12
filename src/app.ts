@@ -11,6 +11,7 @@ import { ImageController } from "./controllers/ImageController";
 import { DockerService } from "./services/Docker";
 import { HeartbeatService } from "./services/Heartbeat";
 import { checkEnv } from "./utils/env";
+import { GithubController } from "./controllers/GithubController";
 
 dotenv.config();
 checkEnv();
@@ -25,7 +26,8 @@ if (process.env.TUGBOAT_PHONE_HOME_INTERVAL && process.env.TUGBOAT_PHONE_HOME_UR
 
 const containerController = new ContainerController(dockerService);
 const imageController = new ImageController(dockerService);
+const githubController = new GithubController();
 
-const application = new Application(containerController, imageController);
+const application = new Application(containerController, imageController, githubController);
 
 application.start();
