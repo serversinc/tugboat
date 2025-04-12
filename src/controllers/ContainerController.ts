@@ -4,6 +4,7 @@ import { streamSSE } from "hono/streaming";
 import { DockerService } from "../services/Docker";
 import { stripAnsiCodes } from "../utils/transformers";
 import { PassThrough } from "stream";
+import { parsePortString } from "../utils/ports";
 
 export class ContainerController {
   private docker: DockerService;
@@ -63,10 +64,17 @@ export class ContainerController {
         await this.docker.pullImage(options.image);
       }
 
+      const ports = parsePortString(options.ports);
+
+      console.log(ports);
+
       const container = await this.docker.createContainer({
         name: options.name,
         Image: options.image,
         Env: options.environment,
+        Labels: options.labels,
+        ExposedPorts: ports.ExposedPorts,
+        HostConfig: ports.HostConfig,
       });
 
       if (options.start) {
@@ -75,10 +83,20 @@ export class ContainerController {
 
       const containerInfo = await this.docker.getContainer(container.id);
 
-      return ctx.json(containerInfo);
+      return ctx.json({
+        success: true,
+        message: `Container ${containerInfo.Name} created successfully`,
+        container: containerInfo,
+      });
     } catch (err) {
       console.log(err);
-      return ctx.json({ error: (err as Error).message }, 500);
+      return ctx.json(
+        {
+          success: false,
+          error: (err as Error).message,
+        },
+        500
+      );
     }
   }
 

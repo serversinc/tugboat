@@ -6,7 +6,7 @@ services:
     image: tugboat:latest
     build: .
     env_file:
-      - .env
+      - .env.linux
     ports:
       - "7567:7567"
     volumes:

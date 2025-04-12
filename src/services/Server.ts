@@ -6,15 +6,16 @@ import { zValidator } from "@hono/zod-validator";
 import { ImageController } from "../controllers/ImageController";
 import { ContainerController } from "../controllers/ContainerController";
 import { createContainerSchema } from "../validators/Containers";
-import { pullImageSchema } from "../validators/Images";
+import { createImageSchema, pullImageSchema } from "../validators/Images";
+import { GithubController } from "../controllers/GithubController";
 
 export class Application {
   private app: Hono;
 
-  constructor(containerController: ContainerController, imageController: ImageController) {
+  constructor(containerController: ContainerController, imageController: ImageController, githubController: GithubController) {
     this.app = new Hono();
 
-    this.app.use(cors())
+    this.app.use(cors());
 
     // Containers
     this.app.get("/containers", containerController.list.bind(containerController));
@@ -32,10 +33,14 @@ export class Application {
 
     // Images
     this.app.get("/images", imageController.list.bind(imageController));
+    this.app.post("/images", zValidator("json", createImageSchema), imageController.create.bind(imageController));
     this.app.get("/images/:id", imageController.get.bind(imageController));
     this.app.post("/images/pull", zValidator("json", pullImageSchema), imageController.pull.bind(imageController));
     this.app.delete("/images/:id", imageController.remove.bind(imageController));
     this.app.get("/prune-images", imageController.list.bind(imageController));
+
+    // Github
+    this.app.post("/github/pull", githubController.pull.bind(githubController));
   }
 
   start() {
