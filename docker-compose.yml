@@ -12,4 +12,4 @@ services:
     volumes:
        - /var/run/docker.sock:/var/run/docker.sock
        - //./pipe/docker_engine://./pipe/docker_engine
-       - ./tugboat:/tugboat
+       - ./tugboat:/root/tugboat

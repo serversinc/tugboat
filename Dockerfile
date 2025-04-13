@@ -7,7 +7,6 @@ WORKDIR /app
 # Install dependencies (including dev dependencies for `tsc`)
 COPY package*.json tsconfig.json ./
 
-RUN sudo apt install -y git
 RUN npm install
 
 # Copy the rest of the source code
@@ -20,6 +19,11 @@ RUN npm run build
 FROM node:20-slim
 
 WORKDIR /app
+
+# Install git and curl for health checks and other utilities
+RUN apt-get update && \
+    apt-get install -y git && \
+    rm -rf /var/lib/apt/lists/*
 
 # Copy only the built code and dependencies from the builder stage
 COPY --from=builder /app/dist ./dist
