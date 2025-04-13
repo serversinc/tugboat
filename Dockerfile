@@ -7,6 +7,7 @@ WORKDIR /app
 # Install dependencies (including dev dependencies for `tsc`)
 COPY package*.json tsconfig.json ./
 
+RUN sudo apt install -y git
 RUN npm install
 
 # Copy the rest of the source code
