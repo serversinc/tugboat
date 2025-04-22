@@ -28,6 +28,11 @@ export class GithubController {
       // Define the directory where the repository will be cloned
       const targetDir = getTargetDirectory(repo);
 
+      // If the directory already exists, delete it
+      if (fs.existsSync(targetDir)) {
+        fs.rmdirSync(targetDir, { recursive: true });
+      }
+
       // Clone the repository and checkout the specified branch
       const cloneCommand = `git clone --branch ${branch} ${repoUrl} ${targetDir}`;
 
