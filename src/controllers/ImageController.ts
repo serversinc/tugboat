@@ -79,6 +79,10 @@ export class ImageController {
         },
       ];
 
+      console.log({
+        targetDir,
+      });
+
       // Run the `pack` builder as a Docker container
       const container = await this.docker.createContainer({
         Image: "buildpacksio/pack",
@@ -95,6 +99,8 @@ export class ImageController {
 
       // Start the container
       await container.start();
+
+      console.log(await container.inspect());
 
       // Stream logs from the container
       const logs: string[] = [];

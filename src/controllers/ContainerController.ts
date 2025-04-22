@@ -66,8 +66,6 @@ export class ContainerController {
 
       const ports = parsePortString(options.ports);
 
-      console.log(ports);
-
       const container = await this.docker.createContainer({
         name: options.name,
         Image: options.image,

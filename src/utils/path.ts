@@ -10,7 +10,7 @@ export function getBaseDirectory(): string {
   let baseDir: string;
 
   const isWindows = os.platform() === "win32";
-  isWindows ? (baseDir = path.resolve(__dirname, "../../repos")) : (baseDir = path.join(os.homedir(), "tugboat"));
+  isWindows ? (baseDir = path.resolve(__dirname, "../../repos")) : (baseDir = "/tugboat");
 
   // Ensure the base directory exists
   if (!fs.existsSync(baseDir)) {
