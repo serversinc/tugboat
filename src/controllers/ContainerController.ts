@@ -71,8 +71,7 @@ export class ContainerController {
         Image: options.image,
         Env: options.environment,
         Labels: options.labels,
-        ExposedPorts: ports.ExposedPorts,
-        HostConfig: ports.HostConfig,
+        ExposedPorts: ports.ExposedPorts
       });
 
       if (options.start) {
