@@ -18,6 +18,18 @@ export class Application {
 
     this.app.use(cors());
 
+    // Authentication middleware
+    this.app.use("*", async (ctx, next) => {
+      const authKey = process.env.TUGBOAT_SECRET_KEY;
+      const requestKey = ctx.req.header("x-auth-key");
+
+      if (!authKey || requestKey !== authKey) {
+        return ctx.json({ error: "Unauthorized" }, 401);
+      }
+
+      await next();
+    });
+
     const serverController = new ServerController();
 
     // Containers
