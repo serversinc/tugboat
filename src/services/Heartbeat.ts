@@ -1,6 +1,7 @@
 import os from "os";
 import axios from "axios";
 import { Container } from "dockerode";
+import { httpService } from "./HttpService";
 
 import { DockerService } from "./Docker";
 
@@ -64,26 +65,13 @@ export class HeartbeatService {
     const usage = await this.getUsage();
 
     try {
-      const response = await axios.post(
-        process.env.TUGBOAT_PHONE_HOME_URL as string,
-        {
-          type: "heartbeat",
-          containers,
-          usage,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${process.env.TUGBOAT_SECRET_KEY}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      await httpService.post({
+        type: "heartbeat",
+        containers,
+        usage,
+      });
 
-      if (response.status !== 200) {
-        console.error("Failed to phone home.");
-      } else {
-        console.log("Successfully phoned home.");
-      }
+      console.log("Successfully phoned home.");
     } catch (error) {
       console.error("Error sending heartbeat:", error);
     }

@@ -5,16 +5,20 @@ import { Application } from "./services/Server";
 
 // Controllers
 import { ContainerController } from "./controllers/ContainerController";
+import { GithubController } from "./controllers/GithubController";
 import { ImageController } from "./controllers/ImageController";
 
 // Services
-import { DockerService } from "./services/Docker";
 import { HeartbeatService } from "./services/Heartbeat";
+import { DockerService } from "./services/Docker";
+
+import { ensureSecretKey } from "./utils/auth";
 import { checkEnv } from "./utils/env";
-import { GithubController } from "./controllers/GithubController";
 
 dotenv.config();
+
 checkEnv();
+ensureSecretKey();
 
 const dockerService = new DockerService();
 const heartbeat = new HeartbeatService(dockerService);

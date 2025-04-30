@@ -1,7 +1,7 @@
 // Checks all environment variables are set
 
 export function checkEnv() {
-  let requiredEnv = ["TUGBOAT_PORT", "TUGBOAT_SECRET_KEY"];
+  let requiredEnv = ["TUGBOAT_PORT"];
   let optionalEnv = ["TUGBOAT_PHONE_HOME_INTERVAL", "TUGBOAT_PHONE_HOME_URL"];
 
   for (const env of requiredEnv) {
