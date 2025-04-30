@@ -8,6 +8,7 @@ import { ContainerController } from "../controllers/ContainerController";
 import { createContainerSchema } from "../validators/Containers";
 import { createImageSchema, pullImageSchema } from "../validators/Images";
 import { GithubController } from "../controllers/GithubController";
+import { ServerController } from "../controllers/ServerController";
 
 export class Application {
   private app: Hono;
@@ -16,6 +17,8 @@ export class Application {
     this.app = new Hono();
 
     this.app.use(cors());
+
+    const serverController = new ServerController();
 
     // Containers
     this.app.get("/containers", containerController.list.bind(containerController));
@@ -41,6 +44,9 @@ export class Application {
 
     // Github
     this.app.post("/github/pull", githubController.pull.bind(githubController));
+
+    // Server commands
+    this.app.post("/server/command", serverController.runCommand.bind(serverController));
   }
 
   start() {
