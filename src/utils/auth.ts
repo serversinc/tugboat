@@ -18,7 +18,7 @@ export function ensureSecretKey() {
 
   // Append the key to the .env file
   try {
-    const path = "/root/tugboat/.env";
+    const path = "/tugboat/.env";
 
     fs.appendFileSync(path, `TUGBOAT_SECRET_KEY=${newKey}\n`);
     console.log("TUGBOAT_SECRET_KEY saved to .env file.");
