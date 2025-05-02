@@ -8,7 +8,7 @@ import { httpService } from "../services/HttpService";
  * stores it in the .env file, and optionally sends it to PHONE_HOME_URL.
  */
 export function ensureSecretKey() {
-  if (process.env.TUGBOAT_SECRET_KEY) {
+  if (process.env.TUGBOAT_SECRET_KEY && process.env.TUGBOAT_SECRET_KEY.length > 0) {
     console.log("TUGBOAT_SECRET_KEY is already set.");
     return;
   }
