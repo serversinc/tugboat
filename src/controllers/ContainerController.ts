@@ -164,6 +164,14 @@ export class ContainerController {
     try {
       const id = ctx.req.param("id");
 
+      // Check for x-auth-key query parameter
+      const authKey = ctx.req.query("x-auth-key");
+      const requestKey = process.env.TUGBOAT_SECRET_KEY;
+
+      if (!authKey || requestKey !== authKey) {
+        return ctx.json({ error: "Unauthorized" }, 401);
+      }
+
       const container = this.docker.docker.getContainer(id);
 
       if (!container) {
