@@ -20,6 +20,12 @@ export class Application {
 
     // Authentication middleware
     this.app.use("*", async (ctx, next) => {
+      const path = ctx.req.path;
+      if (path.startsWith("/containers/") && path.endsWith("/logs")) {
+        await next();
+        return;
+      }
+
       const authKey = process.env.TUGBOAT_SECRET_KEY;
       const requestKey = ctx.req.header("x-auth-key");
 
