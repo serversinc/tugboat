@@ -5,7 +5,6 @@ export const createContainerSchema = z.object({
   environment: z.array(z.string()).optional(),
   ports: z.array(z.string()).optional(),
   image: z.string(),
-  labels: z.record(z.string().optional()).optional(),
   hostConfig: z
     .object({
       NetworkMode: z.string().optional(),
@@ -13,9 +12,13 @@ export const createContainerSchema = z.object({
       AutoRemove: z.boolean().optional(),
     })
     .optional(),
-  tty: z.boolean().optional(),
-  cmd: z.array(z.string()).optional(),
+  command: z.array(z.string()).optional(),
   entrypoint: z.string().optional(),
   workingdir: z.string().optional(),
   start: z.boolean().optional(),
+  labels: z.record(z.string()).optional(),
+  volumes: z.record(z.object({})).optional(),
 });
+
+// Labels?: { [label: string]: string } | undefined;
+// Volumes?: { [volume: string]: {} } | undefined;

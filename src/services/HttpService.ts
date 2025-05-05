@@ -4,12 +4,12 @@ import { config } from "dotenv";
 config(); // Load environment variables from .env file
 
 class HttpService {
-  private client: AxiosInstance;
+  private client: AxiosInstance | null = null; // Axios instance for HTTP requests
   private readonly endpoint = "/"; // Hardcoded endpoint
 
   constructor() {
     if (!process.env.TUGBOAT_PHONE_HOME_URL) {
-      throw new Error("TUGBOAT_PHONE_HOME_URL environment variable is required");
+      return;
     }
 
     this.client = axios.create({
@@ -19,6 +19,11 @@ class HttpService {
   }
 
   async post(data: any) {
+    if (!this.client) {
+      console.warn("HTTP client is not initialized. Skipping POST request.");
+      return;
+    }
+
     try {
       const response = await this.client.post(this.endpoint, data, {
         headers: {
