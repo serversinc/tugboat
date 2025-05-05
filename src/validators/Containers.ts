@@ -17,7 +17,7 @@ export const createContainerSchema = z.object({
   workingdir: z.string().optional(),
   start: z.boolean().optional(),
   labels: z.record(z.string()).optional(),
-  volumes: z.record(z.object({})).optional(),
+  volumes: z.array(z.string()).optional(),
 });
 
 // Labels?: { [label: string]: string } | undefined;
