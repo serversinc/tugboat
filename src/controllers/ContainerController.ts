@@ -71,7 +71,9 @@ export class ContainerController {
         Image: options.image,
         Env: options.environment,
         Labels: options.labels,
-        ExposedPorts: ports.ExposedPorts
+        ExposedPorts: ports.ExposedPorts,
+        Volumes: options.volumes,
+        Cmd: options.command
       });
 
       if (options.start) {

@@ -24,7 +24,7 @@ const dockerService = new DockerService();
 const heartbeat = new HeartbeatService(dockerService);
 
 // Start phone home interval
-if (process.env.TUGBOAT_PHONE_HOME_INTERVAL && process.env.TUGBOAT_PHONE_HOME_URL) {
+if (process.env.TUGBOAT_PHONE_HOME_INTERVAL !== null && process.env.TUGBOAT_PHONE_HOME_URL !== null) {
   heartbeat.start();
 }
 

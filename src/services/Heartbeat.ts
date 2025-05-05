@@ -23,6 +23,11 @@ export class HeartbeatService {
 
     this.sendHeartbeat(); // Initial call right away
 
+    if(!process.env.TUGBOAT_PHONE_HOME_INTERVAL) {
+      console.warn("TUGBOAT_PHONE_HOME_INTERVAL is not set. Heartbeat service will not start.");
+      return;
+    }
+
     this.interval = setInterval(() => {
       this.sendHeartbeat();
     }, parseInt(process.env.TUGBOAT_PHONE_HOME_INTERVAL as string));
