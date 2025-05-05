@@ -72,8 +72,10 @@ export class ContainerController {
         Env: options.environment,
         Labels: options.labels,
         ExposedPorts: ports.ExposedPorts,
-        Volumes: options.volumes,
-        Cmd: options.command
+        HostConfig: {
+          Binds: options.volumes ?? [],
+        },
+        Cmd: options.command,
       });
 
       if (options.start) {
