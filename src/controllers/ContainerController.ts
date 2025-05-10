@@ -74,6 +74,7 @@ export class ContainerController {
         ExposedPorts: ports.ExposedPorts,
         HostConfig: {
           Binds: options.volumes ?? [],
+          PortBindings: ports.PortBindings,
         },
         Cmd: options.command,
       });
