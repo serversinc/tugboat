@@ -1,9 +1,13 @@
-export function parsePortString(ports: string[]): { [key: string]: {} } {
+export function parsePortString(ports: string[]): { ExposedPorts: { [key: string]: {} }; PortBindings: { [key: string]: { HostPort: string }[] } } {
   if (!ports || ports.length === 0) {
-    return {};
+    return {
+      ExposedPorts: {},
+      PortBindings: {},
+    };
   }
 
-  const ExposedPorts: { [key: string]: {} } = {};
+  let ExposedPorts: { [key: string]: {} } = {};
+  let PortBindings: { [key: string]: { HostPort: string }[] } = {};
 
   for (const port of ports) {
     let hostPort: string;
@@ -17,9 +21,11 @@ export function parsePortString(ports: string[]): { [key: string]: {} } {
 
     const portKey = `${containerPort}/tcp`;
     ExposedPorts[portKey] = {};
+    PortBindings[portKey] = [{ HostPort: hostPort }];
   }
 
   return {
     ExposedPorts,
+    PortBindings
   };
 }
