@@ -10,6 +10,7 @@ import { createImageSchema, pullImageSchema } from "../validators/Images";
 import { GithubController } from "../controllers/GithubController";
 import { ServerController } from "../controllers/ServerController";
 import { NetworkController } from "../controllers/NetworkController";
+import { createNetworkSchema } from "../validators/Networks";
 
 export class Application {
   private app: Hono;
@@ -64,7 +65,7 @@ export class Application {
     // Networks
     this.app.get("/networks", networkController.list.bind(networkController));
     this.app.get("/networks/:id", networkController.get.bind(networkController));
-    this.app.post("/networks", networkController.create.bind(networkController));
+    this.app.post("/networks", zValidator("json", createNetworkSchema), networkController.create.bind(networkController));
     this.app.delete("/networks/:id", networkController.remove.bind(networkController));
 
     // Github

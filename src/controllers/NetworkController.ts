@@ -35,9 +35,21 @@ export class NetworkController {
 
   async create(ctx: Context) {
     try {
-      const body = await ctx.req.json();
-      const network = await this.docker.docker.createNetwork(body);
+      const options = await ctx.req.json();
+
+      const network = await this.docker.docker.createNetwork({
+        Name: options.name,
+        Driver: options.drive || "bridge",
+        CheckDuplicate: true,
+        Internal: options.internal || false,
+        Attachable: options.attachable || false,
+        Ingress: options.ingress || false,
+        EnableIPv6: options.enable_ipv6 || false,
+        Labels: options.labels || {}
+      });
+
       const data = await network.inspect();
+
       return ctx.json(data, 201);
     } catch (error: any) {
       return ctx.json({ error: error.message }, 400);
