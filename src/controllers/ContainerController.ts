@@ -75,12 +75,12 @@ export class ContainerController {
         HostConfig: {
           Binds: options.volumes ?? [],
           PortBindings: ports.PortBindings,
-          NetworkMode: options.networks?.[0] || "bridge",
+          NetworkMode: options.networks?.[0] || "tugboat",
         },
         Cmd: options.command,
         NetworkingConfig: {
           EndpointsConfig: {
-            [options.networks?.[0] || "bridge"]: {
+            [options.networks[0] || "tugboat"]: {
               Aliases: [options.name],
             },
           },
