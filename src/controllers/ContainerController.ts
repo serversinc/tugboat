@@ -80,7 +80,7 @@ export class ContainerController {
         Cmd: options.command,
         NetworkingConfig: {
           EndpointsConfig: {
-            [options.networks[0] || "tugboat"]: {
+            [options.networks?.[0] || "tugboat"]: {
               Aliases: [options.name],
             },
           },
