@@ -18,6 +18,13 @@ export const createContainerSchema = z.object({
   start: z.boolean().optional(),
   labels: z.record(z.string()).optional(),
   volumes: z.array(z.string()).optional(),
+  networks: z.array(z.string()).optional(),
+  restartPolicy: z
+    .object({
+      Name: z.string().optional(),
+      MaximumRetryCount: z.number().optional(),
+    })
+    .optional(),
 });
 
 // Labels?: { [label: string]: string } | undefined;
