@@ -75,8 +75,18 @@ export class ContainerController {
         HostConfig: {
           Binds: options.volumes ?? [],
           PortBindings: ports.PortBindings,
+          NetworkMode: options.networks?.[0] || "bridge",
         },
         Cmd: options.command,
+        NetworkingConfig: {
+          EndpointsConfig: {
+            [options.networks?.[0] || "bridge"]: {
+              Aliases: [options.name],
+            },
+          },
+        },
+        Entrypoint: options.entrypoint,
+        WorkingDir: options.workingdir,
       });
 
       if (options.start) {
