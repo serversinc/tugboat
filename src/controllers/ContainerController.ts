@@ -61,7 +61,11 @@ export class ContainerController {
       const imageExists = await this.docker.checkImageExists(options.image);
 
       if (!imageExists) {
-        await this.docker.pullImage(options.image);
+        await this.docker.pullImage(options.image, {
+          username: options.auth?.username,
+          password: options.auth?.password,
+          registry: options.auth?.registry,
+        });
       }
 
       const ports = parsePortString(options.ports);
