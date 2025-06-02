@@ -1,4 +1,4 @@
-import Docker from "dockerode";
+import Docker, { AuthConfig } from "dockerode";
 
 import dotenv from "dotenv";
 import { normalizeContainer } from "../utils/transformers";
@@ -62,10 +62,29 @@ export class DockerService {
     return await this.docker.getImage(id).inspect();
   }
 
-  async pullImage(name: string): Promise<void> {
+  async pullImage(name: string, auth?: { username?: string; password?: string; registry?: string }): Promise<void> {
     return new Promise((resolve, reject) => {
       console.log(`Attempting to pull image: ${name}`);
-      this.docker.pull(name, (err: any, stream: any) => {
+
+      let authconfig: AuthConfig | undefined = undefined;
+      if (auth && auth.username && auth.password && auth.registry) {
+        authconfig = {
+          username: auth.username,
+          password: auth.password,
+          serveraddress: auth.registry,
+          auth: '',
+        };
+
+        this.docker.checkAuth(authconfig, (err: any) => {
+          if (err) {
+            console.error(`Error checking auth for image ${name}:`, err);
+            return reject(err);
+          }
+          console.log(`Auth check successful for image ${name}`);
+        });
+      }
+
+      this.docker.pull(name, { 'authconfig': authconfig }, (err: any, stream: any) => {
         if (err) {
           console.error(`Error initiating pull for image ${name}:`, err);
           return reject(err);
