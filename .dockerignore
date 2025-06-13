@@ -3,3 +3,4 @@
 .env.linux
 node_modules
 dist
+tugboat
