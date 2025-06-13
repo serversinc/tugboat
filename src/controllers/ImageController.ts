@@ -1,6 +1,5 @@
 import { Context } from "hono";
 import { DockerService } from "../services/Docker";
-import { getTargetDirectory } from "../utils/path";
 
 export class ImageController {
   private docker: DockerService;
@@ -51,11 +50,28 @@ export class ImageController {
    */
   async create(ctx: Context) {
     try {
-      const options = (await ctx.req.json()) as { name: string; tag: string };
+      const options = (await ctx.req.json()) as { name: string; tag: string; token: string };
 
-      const targetDir = getTargetDirectory(options.name);
+      // Construct the repository URL with the token for authentication
+      const repoUrl = `https://${options.token}@github.com/${options.name}.git`;
+      const repoOrg = options.name.split("/")[0];
       const repoName = options.name.split("/").pop();
-      const imageName = `${repoName}:${options.tag || "latest"}`;
+      const volumePath = `/workspace/${repoOrg}`;
+
+      // Create a temp container to populate the volume
+      const gitContainer = await this.docker.createContainer({
+        Image: "alpine/git",
+        Cmd: ["clone", repoUrl, `${volumePath}/${repoName}`],
+        Tty: false,
+        WorkingDir: "/workspace",
+        HostConfig: {
+          Binds: ["/tugboat:/workspace:rw"],
+          AutoRemove: true,
+        },
+      });
+
+      await gitContainer.start();
+      await gitContainer.wait(); // Wait until clone is done
 
       // Check if buildpacksio/pack image is available locally
       const packImage = await this.docker.getImage("buildpacksio/pack").catch(() => null);
@@ -64,38 +80,24 @@ export class ImageController {
         await this.docker.pullImage("buildpacksio/pack");
       }
 
-      // Volume mappings
-      const volumes = [
-        {
-          // Mount the Docker socket for container management
-          from: "/var/run/docker.sock",
-          to: "/var/run/docker.sock",
-          mode: "rw", // Read/write permissions
-        },
-        {
-          from: targetDir,
-          to: "/workspace",
-          mode: "rw",
-        },
-      ];
-
-      console.log({
-        targetDir,
-      });
-
       // Run the `pack` builder as a Docker container
       const container = await this.docker.createContainer({
         Image: "buildpacksio/pack",
-        Cmd: ["build", repoName!, "--builder", "heroku/builder:22", "--verbose", "--path", "/workspace"],
+        Cmd: [
+          "build",
+          repoName!,
+          "--builder",
+          "heroku/builder:22",
+          "--path",
+          `/workspace/${repoOrg}/${repoName}`,
+          "--verbose"
+        ],
         Tty: true,
-        WorkingDir: "/workspace",
+        WorkingDir: `/workspace/${repoOrg}/${repoName}`,
         HostConfig: {
-          Binds: volumes.map(vol => `${vol.from}:${vol.to}:${vol.mode}`),
-          AutoRemove: true,
+          Binds: ["/var/run/docker.sock:/var/run/docker.sock:rw", "/tugboat:/workspace:rw"],
         },
       });
-
-      console.log("Container created:", container.id);
 
       // Start the container
       await container.start();
@@ -131,7 +133,7 @@ export class ImageController {
 
       return ctx.json({
         success: true,
-        message: `Image ${imageName} built successfully`,
+        message: `Image ${repoName} built successfully`,
         logs,
       });
     } catch (err) {
