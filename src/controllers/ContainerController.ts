@@ -2,7 +2,7 @@ import { Context } from "hono";
 import { streamSSE } from "hono/streaming";
 
 import { DockerService } from "../services/Docker";
-import { stripAnsiCodes } from "../utils/transformers";
+import { demultiplexDockerStream, stripAnsiCodes } from "../utils/transformers";
 import { PassThrough } from "stream";
 import { parsePortString } from "../utils/ports";
 
@@ -226,6 +226,72 @@ export class ContainerController {
           const clean = stripAnsiCodes(message);
           await stream.writeSSE({ data: `[stderr] ${clean}` });
         }
+      });
+    } catch (err) {
+      return ctx.json({ error: (err as Error).message }, 500);
+    }
+  }
+
+  async runCommand(ctx: Context) {
+    try {
+      const id = ctx.req.param("id");
+      const { command } = await ctx.req.json<{ command: string }>();
+
+      if (!command) {
+        return ctx.json({ error: "Command is required" }, 400);
+      }
+
+      const container = this.docker.docker.getContainer(id);
+
+      if (!container) {
+        return ctx.json({ error: "Container not found" }, 404);
+      }
+
+      const exec = await container.exec({
+        Cmd: command.split(" "),
+        AttachStdout: true,
+        AttachStderr: true,
+      });
+
+      // Run the exec command,
+      const stream = await exec.start({
+        hijack: true,
+        stdin: false,
+      });
+
+      // Collect all chunks first
+      const chunks: Buffer[] = [];
+      for await (const chunk of stream) {
+        chunks.push(Buffer.from(chunk));
+      }
+
+      // Combine all chunks
+      const buffer = Buffer.concat(chunks);
+
+      // Demultiplex the Docker stream
+      const { stdout, stderr } = demultiplexDockerStream(buffer);
+
+      // Clean up the output
+      let cleanStdout = stripAnsiCodes(stdout).trim();
+      let cleanStderr = stripAnsiCodes(stderr).trim();
+
+      // Detect if either output has \n in or \r\n and return as a single line
+      if (cleanStdout.includes("\n")) {
+        cleanStdout = cleanStdout.split("\n").map(line => line.trim()).join(" ");
+      }
+
+      if (cleanStderr.includes("\n")) {
+        cleanStderr = cleanStderr.split("\n").map(line => line.trim()).join(" ");
+      }
+
+      // Return the output as a JSON response
+      return ctx.json({
+        success: true,
+        message: "Command executed successfully",
+        output: {
+          stdout: cleanStdout,
+          stderr: cleanStderr,
+        },
       });
     } catch (err) {
       return ctx.json({ error: (err as Error).message }, 500);

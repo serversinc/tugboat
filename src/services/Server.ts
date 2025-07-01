@@ -50,6 +50,7 @@ export class Application {
     this.app.post("/containers/:id/start", containerController.start.bind(containerController));
     this.app.post("/containers/:id/stop", containerController.stop.bind(containerController));
     this.app.post("/containers/:id/restart", containerController.restart.bind(containerController));
+    this.app.post("/containers/:id/command", containerController.runCommand.bind(containerController));
 
     // Logs
     this.app.get("/containers/:id/logs", containerController.logs.bind(containerController));

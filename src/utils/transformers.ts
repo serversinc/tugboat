@@ -51,3 +51,35 @@ export function normalizeContainer(container: ContainerInfo) {
 export function stripAnsiCodes(input: string): string {
   return input.replace(/\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/g, "");
 }
+
+/**
+ * Demultiplexes a Docker stream buffer into stdout and stderr
+ * @param buffer Buffer containing the Docker stream data
+ * @returns An object with `stdout` and `stderr` properties containing the respective output
+ */
+export function demultiplexDockerStream(buffer: Buffer): { stdout: string; stderr: string } {
+  let stdout = '';
+  let stderr = '';
+  let offset = 0;
+
+  while (offset < buffer.length) {
+    if (offset + 8 > buffer.length) break;
+
+    const streamType = buffer[offset];
+    const size = buffer.readUInt32BE(offset + 4);
+    
+    if (offset + 8 + size > buffer.length) break;
+
+    const data = buffer.slice(offset + 8, offset + 8 + size).toString('utf8');
+    
+    if (streamType === 1) {
+      stdout += data; // STDOUT
+    } else if (streamType === 2) {
+      stderr += data; // STDERR
+    }
+    
+    offset += 8 + size;
+  }
+
+  return { stdout, stderr };
+}

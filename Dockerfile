@@ -7,7 +7,7 @@ WORKDIR /app
 # Install dependencies (including dev dependencies for `tsc`)
 COPY package*.json tsconfig.json ./
 
-RUN npm install
+RUN npm ci --only=production=false
 
 # Copy the rest of the source code
 COPY . .
@@ -22,7 +22,7 @@ WORKDIR /app
 
 # Install git and curl for health checks and other utilities
 RUN apt-get update && \
-    apt-get install -y git && \
+    apt-get install -y git cron && \
     rm -rf /var/lib/apt/lists/*
 
 # Copy only the built code and dependencies from the builder stage
