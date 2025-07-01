@@ -8,7 +8,7 @@
     "build": "tsc",
     "start": "node dist/app.js",
     "docker:build": "docker build -t tugboat .",
-    "docker:run": "docker run --name tugboat --env-file .env.linux -p 7567:7567 -v /var/run/docker.sock:/var/run/docker.sock -v //./pipe/docker_engine://./pipe/docker_engine -v \"/tugboat:/root/tugboat\" tugboat:latest"
+    "docker:run": "docker stop tugboat && docker rm tugboat && docker run --name tugboat --env-file ./tugboat/.env -p 7567:7567 -v /var/run/docker.sock:/var/run/docker.sock -v //./pipe/docker_engine://./pipe/docker_engine -v \"/tugboat:/tugboat\" tugboat:latest"
   },
   "keywords": [],
   "author": "",
