@@ -1,5 +1,9 @@
 import { Context } from "hono";
 import { DockerService } from "../services/Docker";
+import { httpService } from "../services/HttpService";
+
+import path from "path";
+import os from "os";
 
 export class ImageController {
   private docker: DockerService;
@@ -52,89 +56,111 @@ export class ImageController {
     try {
       const options = (await ctx.req.json()) as { name: string; tag: string; token: string };
 
-      // Construct the repository URL with the token for authentication
-      const repoUrl = `https://${options.token}@github.com/${options.name}.git`;
-      const repoOrg = options.name.split("/")[0];
-      const repoName = options.name.split("/").pop();
-      const volumePath = `/workspace/${repoOrg}`;
+      // Start build in background
+      /* eslint-disable-next-line @typescript-eslint/no-floating-promises */
+      (async () => {
+        try {
 
-      // Create a temp container to populate the volume
-      const gitContainer = await this.docker.createContainer({
-        Image: "alpine/git",
-        Cmd: ["clone", repoUrl, `${volumePath}/${repoName}`],
-        Tty: false,
-        WorkingDir: "/workspace",
-        HostConfig: {
-          Binds: ["/tugboat:/workspace:rw"],
-          AutoRemove: true,
-        },
-      });
+          console.log(`Starting build for ${options.name} with tag ${options.tag}`);
 
-      await gitContainer.start();
-      await gitContainer.wait(); // Wait until clone is done
+          // Construct the repository URL with the token for authentication
+          const repoUrl = `https://${options.token}@github.com/${options.name}.git`;
+          const repoOrg = options.name.split("/")[0];
+          const repoName = options.name.split("/").pop();
+          const volumePath = `/workspace/${repoOrg}`;
 
-      // Check if buildpacksio/pack image is available locally
-      const packImage = await this.docker.getImage("buildpacksio/pack").catch(() => null);
 
-      if (!packImage) {
-        await this.docker.pullImage("buildpacksio/pack");
-      }
+          const hostTugboatPath = path.join(process.env.HOST_TUGBOAT_PATH || os.homedir(), "tugboat");
 
-      // Run the `pack` builder as a Docker container
-      const container = await this.docker.createContainer({
-        Image: "buildpacksio/pack",
-        Cmd: [
-          "build",
-          repoName!,
-          "--builder",
-          "heroku/builder:22",
-          "--path",
-          `/workspace/${repoOrg}/${repoName}`,
-          "--verbose"
-        ],
-        Tty: true,
-        WorkingDir: `/workspace/${repoOrg}/${repoName}`,
-        HostConfig: {
-          Binds: ["/var/run/docker.sock:/var/run/docker.sock:rw", "/tugboat:/workspace:rw"],
-        },
-      });
+          // Create a temp container to populate the volume
+          const gitContainer = await this.docker.createContainer({
+            Image: "alpine/git",
+            Cmd: ["clone", repoUrl, `${volumePath}/${repoName}`],
+            Tty: false,
+            WorkingDir: "/workspace",
+            HostConfig: {
+              Binds: [`${hostTugboatPath}:/workspace:rw`],
+              AutoRemove: true,
+            },
+          });
 
-      // Start the container
-      await container.start();
+          await gitContainer.start();
+          await gitContainer.wait(); // Wait until clone is done
 
-      console.log(await container.inspect());
+          // Check if buildpacksio/pack image is available locally
+          const packImage = await this.docker.getImage("buildpacksio/pack").catch(() => null);
 
-      // Stream logs from the container
-      const logs: string[] = [];
-      const stream = await container.logs({
-        follow: true,
-        stdout: true,
-        stderr: true,
-      });
+          if (!packImage) {
+            await this.docker.pullImage("buildpacksio/pack");
+          }
 
-      stream.on("data", chunk => {
-        logs.push(chunk.toString());
-        console.log(chunk.toString()); // Optionally log to the console
-      });
+          // Run the `pack` builder as a Docker container
+          const container = await this.docker.createContainer({
+            Image: "buildpacksio/pack",
+            Cmd: ["build", repoName!, "--builder", "heroku/builder:22", "--path", `/workspace/${repoOrg}/${repoName}`, "--verbose"],
+            Tty: true,
+            WorkingDir: `/workspace/${repoOrg}/${repoName}`,
+            HostConfig: {
+              Binds: ["/var/run/docker.sock:/var/run/docker.sock:rw", `${hostTugboatPath}:/workspace:rw`],
+            },
+          });
 
-      // Wait for the container to finish
-      const exitCode = await container.wait();
+          await container.start();
+          // Optionally log inspect
+          // console.log(await container.inspect());
 
-      if (exitCode.StatusCode !== 0) {
-        return ctx.json(
-          {
-            success: false,
-            error: `Pack build failed with exit code ${exitCode.StatusCode}`,
-            logs,
-          },
-          500
-        );
-      }
+          // Stream logs from the container
+          const logs: string[] = [];
+          const stream = await container.logs({
+            follow: true,
+            stdout: true,
+            stderr: true,
+          });
 
+          stream.on("data", chunk => {
+            logs.push(chunk.toString());
+            // Optionally log to the console
+          });
+
+          const exitCode = await container.wait();
+
+          if (exitCode.StatusCode !== 0) {
+            await httpService.post({
+              type: "build_complete",
+              image: {
+                name: `${repoOrg}/${repoName}:${options.tag}`,
+                logs,
+                error: `Pack build failed with exit code ${exitCode.StatusCode}`,
+              },
+            });
+            return;
+          }
+
+          console.log(`Pack build completed with exit code ${exitCode.StatusCode}`);
+          await httpService.post({
+            type: "build_complete",
+            image: {
+              name: `${repoOrg}/${repoName}:${options.tag}`,
+              logs,
+            },
+          });
+        } catch (err) {
+          console.error("Error during image build:", err);
+          await httpService.post({
+            type: "build_complete",
+            image: {
+              name: options.name,
+              logs: [],
+              error: (err as Error).message,
+            },
+          });
+        }
+      })();
+
+      // Respond immediately
       return ctx.json({
         success: true,
-        message: `Image ${repoName} built successfully`,
-        logs,
+        message: `Build started for ${options.name}`,
       });
     } catch (err) {
       return ctx.json(

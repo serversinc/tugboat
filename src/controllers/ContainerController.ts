@@ -5,6 +5,7 @@ import { DockerService } from "../services/Docker";
 import { demultiplexDockerStream, stripAnsiCodes } from "../utils/transformers";
 import { PassThrough } from "stream";
 import { parsePortString } from "../utils/ports";
+import { httpService } from "../services/HttpService";
 
 export class ContainerController {
   private docker: DockerService;
@@ -98,6 +99,13 @@ export class ContainerController {
       }
 
       const containerInfo = await this.docker.getContainer(container.id);
+
+      if (options.rolling_deploy) {
+        await httpService.post({
+          type: "rolling_deploy",
+          container: containerInfo,
+        });
+      }
 
       return ctx.json({
         success: true,
@@ -277,11 +285,17 @@ export class ContainerController {
 
       // Detect if either output has \n in or \r\n and return as a single line
       if (cleanStdout.includes("\n")) {
-        cleanStdout = cleanStdout.split("\n").map(line => line.trim()).join(" ");
+        cleanStdout = cleanStdout
+          .split("\n")
+          .map(line => line.trim())
+          .join(" ");
       }
 
       if (cleanStderr.includes("\n")) {
-        cleanStderr = cleanStderr.split("\n").map(line => line.trim()).join(" ");
+        cleanStderr = cleanStderr
+          .split("\n")
+          .map(line => line.trim())
+          .join(" ");
       }
 
       // Return the output as a JSON response

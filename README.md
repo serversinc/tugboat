@@ -57,9 +57,12 @@ curl -X GET http://localhost:7567/v1/containers/:id
 - `TUGBOAT_SECRET_KEY`: The secret key for authenticating requests to the agent
 - `TUGBOAT_PHONE_HOME_INTERVAL`: The interval at which the agent will send a heartbeat to your server.
 - `TUGBOAT_PHONE_HOME_URL`: The URL to which the agent will send a heartbeat.
+- `TUGBOAT_HOME`: The path to the Tugboat directory on your host machine. This is where the agent will store its data.
 - `DOCKER_PLATFORM`: The platform on which the agent is running, leave empty for Linux. Only needed for local development or windows platforms.
 
 ## Contributing
+
+Ensure you have a `tugboat` folder in your home directory, or set the `TUGBOAT_HOME` environment variable to point to your Tugboat directory.
 
 1. Fork the repository
 2. Create a new branch (`git checkout -b feature`)

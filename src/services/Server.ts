@@ -22,6 +22,7 @@ export class Application {
     // Authentication middleware
     this.app.use("*", async (ctx, next) => {
       const path = ctx.req.path;
+      // Logs endpoint checks auth from query params
       if (path.startsWith("/containers/") && path.endsWith("/logs")) {
         await next();
         return;
@@ -58,7 +59,6 @@ export class Application {
     this.app.get("/images/:id", imageController.get.bind(imageController));
     this.app.post("/images/pull", zValidator("json", pullImageSchema), imageController.pull.bind(imageController));
     this.app.delete("/images/:id", imageController.remove.bind(imageController));
-    this.app.get("/prune-images", imageController.list.bind(imageController));
 
     // Networks
     this.app.get("/networks", networkController.list.bind(networkController));
