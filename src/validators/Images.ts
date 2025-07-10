@@ -6,5 +6,6 @@ export const pullImageSchema = z.object({
 
 export const createImageSchema = z.object({
   name: z.string(),
-  tag: z.string().optional(),
+  token: z.string(),
+  tag: z.string(),
 });

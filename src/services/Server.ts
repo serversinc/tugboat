@@ -8,7 +8,6 @@ import { ContainerController } from "../controllers/ContainerController";
 import { createContainerSchema } from "../validators/Containers";
 import { createImageSchema, pullImageSchema } from "../validators/Images";
 import { GithubController } from "../controllers/GithubController";
-import { ServerController } from "../controllers/ServerController";
 import { NetworkController } from "../controllers/NetworkController";
 import { createNetworkSchema } from "../validators/Networks";
 
@@ -23,6 +22,7 @@ export class Application {
     // Authentication middleware
     this.app.use("*", async (ctx, next) => {
       const path = ctx.req.path;
+      // Logs endpoint checks auth from query params
       if (path.startsWith("/containers/") && path.endsWith("/logs")) {
         await next();
         return;
@@ -37,8 +37,6 @@ export class Application {
 
       await next();
     });
-
-    const serverController = new ServerController();
 
     // Containers
     this.app.get("/containers", containerController.list.bind(containerController));
@@ -61,7 +59,6 @@ export class Application {
     this.app.get("/images/:id", imageController.get.bind(imageController));
     this.app.post("/images/pull", zValidator("json", pullImageSchema), imageController.pull.bind(imageController));
     this.app.delete("/images/:id", imageController.remove.bind(imageController));
-    this.app.get("/prune-images", imageController.list.bind(imageController));
 
     // Networks
     this.app.get("/networks", networkController.list.bind(networkController));
@@ -71,9 +68,6 @@ export class Application {
 
     // Github
     this.app.post("/github/pull", githubController.pull.bind(githubController));
-
-    // Server commands
-    this.app.post("/server/command", serverController.runCommand.bind(serverController));
   }
 
   start() {
