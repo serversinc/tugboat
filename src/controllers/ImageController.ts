@@ -54,7 +54,7 @@ export class ImageController {
    */
   async create(ctx: Context) {
     try {
-      const options = (await ctx.req.json()) as { name: string; tag: string; token: string };
+      const options = (await ctx.req.json()) as { name: string; tag: string; token: string, applicationId?: string };
 
       // Start build in background
       /* eslint-disable-next-line @typescript-eslint/no-floating-promises */
@@ -106,8 +106,6 @@ export class ImageController {
           });
 
           await container.start();
-          // Optionally log inspect
-          // console.log(await container.inspect());
 
           // Stream logs from the container
           const logs: string[] = [];
@@ -126,33 +124,36 @@ export class ImageController {
 
           if (exitCode.StatusCode !== 0) {
             await httpService.post({
-              type: "build_complete",
+              type: "build_failed",
               image: {
                 name: `${repoOrg}/${repoName}:${options.tag}`,
                 logs,
                 error: `Pack build failed with exit code ${exitCode.StatusCode}`,
               },
+              applicationId: options.applicationId,
             });
             return;
           }
 
           console.log(`Pack build completed with exit code ${exitCode.StatusCode}`);
           await httpService.post({
-            type: "build_complete",
+            type: "build_completed",
             image: {
               name: `${repoOrg}/${repoName}:${options.tag}`,
               logs,
             },
+            applicationId: options.applicationId,
           });
         } catch (err) {
           console.error("Error during image build:", err);
           await httpService.post({
-            type: "build_complete",
+            type: "build_failed",
             image: {
               name: options.name,
               logs: [],
               error: (err as Error).message,
             },
+          applicationId: options.applicationId,
           });
         }
       })();
