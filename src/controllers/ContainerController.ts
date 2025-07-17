@@ -102,7 +102,7 @@ export class ContainerController {
 
       const containerInfo = await this.docker.getContainer(container.id);
 
-      if (options['rolling-deploy'] && options['rolling-deploy'] === true) {
+      if (options['rolling_deploy'] && options['rolling_deploy'] === true) {
         console.log("Triggering rolling deploy for container:", containerInfo.Name);
         await httpService.post({
           type: "rolling_deploy",
