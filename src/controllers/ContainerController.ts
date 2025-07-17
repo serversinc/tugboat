@@ -58,6 +58,8 @@ export class ContainerController {
       // createContainerSchema
       const options = await ctx.req.json();
 
+      console.log("Creating container with options:", options);
+
       // Check if image exists
       const imageExists = await this.docker.checkImageExists(options.image);
 
@@ -100,13 +102,15 @@ export class ContainerController {
 
       const containerInfo = await this.docker.getContainer(container.id);
 
-      if (options.rolling_deploy) {
+      if (options['rolling-deploy'] && options['rolling-deploy'] === true) {
+        console.log("Triggering rolling deploy for container:", containerInfo.Name);
         await httpService.post({
           type: "rolling_deploy",
           container: containerInfo,
         });
       }
 
+      console.log("Container created successfully:", containerInfo.Name);
       return ctx.json({
         success: true,
         message: `Container ${containerInfo.Name} created successfully`,
