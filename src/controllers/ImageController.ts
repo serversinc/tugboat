@@ -69,7 +69,6 @@ export class ImageController {
           const repoName = options.name.split("/").pop();
           const volumePath = `/workspace/${repoOrg}`;
 
-
           const hostTugboatPath = path.join(process.env.HOST_TUGBOAT_PATH || os.homedir(), "tugboat");
 
           // Create a temp container to populate the volume
@@ -97,7 +96,7 @@ export class ImageController {
           // Run the `pack` builder as a Docker container
           const container = await this.docker.createContainer({
             Image: "buildpacksio/pack",
-            Cmd: ["build", repoName!, "--builder", "heroku/builder:22", "--path", `/workspace/${repoOrg}/${repoName}`, "--verbose"],
+            Cmd: ["build", repoName!, "--builder", "heroku/builder:22", "--path", `/workspace/${repoOrg}/${repoName}`, "-t", `${repoOrg}/${repoName}:${options.tag}`, "--verbose"],
             Tty: true,
             WorkingDir: `/workspace/${repoOrg}/${repoName}`,
             HostConfig: {
