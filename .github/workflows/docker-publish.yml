@@ -60,3 +60,17 @@ jobs:
           TAGS: ${{ steps.meta.outputs.tags }}
           DIGEST: ${{ steps.build-and-push.outputs.digest }}
         run: echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
+
+      - name: Send POST request with secret to two URLs
+        env:
+          WEBHOOK_SECRET: ${{ secrets.WEBHOOK_SECRET }}
+        run: |
+          BODY=$(jq -n --arg secret "$WEBHOOK_SECRET" '{secret: $secret}')
+
+          curl -X POST https://api.serversinc.io/v1/github/tugboat \
+              -H "Content-Type: application/json" \
+              -d "$BODY"
+
+          curl -X POST https://local.serversinc.io/v1/github/tugboat \
+              -H "Content-Type: application/json" \
+              -d "$BODY"
