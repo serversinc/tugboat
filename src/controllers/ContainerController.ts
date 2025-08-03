@@ -189,6 +189,7 @@ export class ContainerController {
 
       // Check for x-auth-key query parameter
       const authKey = ctx.req.query("x-auth-key");
+      const tail = ctx.req.query("tail") || 200;
       const requestKey = process.env.TUGBOAT_SECRET_KEY;
 
       if (!authKey || requestKey !== authKey) {
@@ -205,8 +206,8 @@ export class ContainerController {
         follow: true,
         stdout: true,
         stderr: true,
-        since: 0,
         timestamps: false,
+        tail: Number(tail),
       });
 
       // Create two clean output streams

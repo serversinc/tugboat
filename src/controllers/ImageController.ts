@@ -101,6 +101,7 @@ export class ImageController {
             WorkingDir: `/workspace/${repoOrg}/${repoName}`,
             HostConfig: {
               Binds: ["/var/run/docker.sock:/var/run/docker.sock:rw", `${hostTugboatPath}:/workspace:rw`],
+              AutoRemove: true,
             },
           });
 
