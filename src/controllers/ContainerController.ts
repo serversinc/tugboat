@@ -63,7 +63,7 @@ export class ContainerController {
       // Check if image exists
       const imageExists = await this.docker.checkImageExists(options.image);
 
-      if (!imageExists) {
+      if (!imageExists || options.pullImage) {
         await this.docker.pullImage(options.image, {
           username: options.auth?.username,
           password: options.auth?.password,
