@@ -1,11 +1,12 @@
 import axios, { AxiosInstance } from "axios";
 import { config } from "dotenv";
+import { warn } from "../utils/console";
 
 config(); // Load environment variables from .env file
 
 class HttpService {
-  private client: AxiosInstance | null = null; // Axios instance for HTTP requests
-  private readonly endpoint = "/"; // Hardcoded endpoint
+  private client: AxiosInstance | null = null;
+  private readonly endpoint = "/events";
 
   constructor() {
     if (!process.env.TUGBOAT_PHONE_HOME_URL) {
@@ -13,14 +14,14 @@ class HttpService {
     }
 
     this.client = axios.create({
-      baseURL: process.env.TUGBOAT_PHONE_HOME_URL, // Set the base URL
-      timeout: 5000, // Set a default timeout
+      baseURL: process.env.TUGBOAT_PHONE_HOME_URL,
+      timeout: 5000,
     });
   }
 
   async post(data: any) {
     if (!this.client) {
-      console.warn("HTTP client is not initialized. Skipping POST request.");
+      warn("Http", "HTTP client is not initialized. Skipping POST request.");
       return;
     }
 

@@ -10,6 +10,7 @@ import { createImageSchema, pullImageSchema } from "../validators/Images";
 import { GithubController } from "../controllers/GithubController";
 import { NetworkController } from "../controllers/NetworkController";
 import { createNetworkSchema } from "../validators/Networks";
+import { info } from "../utils/console";
 
 export class Application {
   private app: Hono;
@@ -76,8 +77,8 @@ export class Application {
         port: process.env.TUGBOAT_PORT ? parseInt(process.env.TUGBOAT_PORT) : 3000,
         fetch: this.app.fetch.bind(this.app),
       },
-      info => {
-        console.log(`Server listening on http://localhost:${info.port}`);
+      data => {
+        info("Hono", `Server started on port ${data.port}`);
       }
     );
   }

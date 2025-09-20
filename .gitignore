@@ -1,6 +1,8 @@
 .vscode 
 .env
+.env.local
+
 node_modules
 dist
-.env.linux
 repos
+tugboat

@@ -1,34 +1,39 @@
-# Use official Node.js LTS image for stability
+# ---- Builder Stage ----
 FROM node:20-slim AS builder
 
-# Set working directory
 WORKDIR /app
 
-# Install dependencies (including dev dependencies for `tsc`)
+# Install deps (dev included for TypeScript build)
 COPY package*.json tsconfig.json ./
-
 RUN npm ci --only=production=false
 
-# Copy the rest of the source code
+# Copy source and build
 COPY . .
-
-# Build the TypeScript project
 RUN npm run build
 
-# ---- Production Image ----
+
+# ---- Production Stage ----
 FROM node:20-slim
 
 WORKDIR /app
 
-# Install git and curl for health checks and other utilities
+# Install utilities:
+# - iproute2 → provides `ip` command
+# - docker.io → docker CLI
+# - curl/git/cron → for health checks, vcs, scheduling
 RUN apt-get update && \
-    apt-get install -y git cron && \
+    apt-get install -y \
+      iproute2 \
+      docker.io \
+      git \
+      curl \
+      cron && \
     rm -rf /var/lib/apt/lists/*
 
-# Copy only the built code and dependencies from the builder stage
+# Copy built code and dependencies
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY package*.json ./
 
-# Command to run the server
+# Default command
 CMD ["node", "dist/app.js"]
