@@ -1,7 +1,8 @@
 import crypto from "crypto";
 import fs from "fs";
 
-import { httpService } from "../services/HttpService";
+import { httpService } from "../services/Http";
+import { info, error } from "./console";
 
 /**
  * Ensures that TUGBOAT_SECRET_KEY is set. If not, generates a new key,
@@ -17,12 +18,12 @@ export function ensureSecretKey() {
       const match = envContent.match(/^TUGBOAT_SECRET_KEY=(.+)$/m);
       if (match) {
         process.env.TUGBOAT_SECRET_KEY = match[1];
-        console.log("TUGBOAT_SECRET_KEY loaded from .env file.");
+        info("Env", "TUGBOAT_SECRET_KEY loaded from .env file.");
         return;
       }
     }
-  } catch (error: any) {
-    console.error("Failed to read .env file:", error.message);
+  } catch (e: any) {
+    error("Env", `Failed to read .env file: ${e.message}`);
   }
 
   // Generate a new key if not found
@@ -32,9 +33,9 @@ export function ensureSecretKey() {
   // Append the key to the .env file
   try {
     fs.appendFileSync(envPath, `TUGBOAT_SECRET_KEY=${newKey}\n`);
-    console.log("TUGBOAT_SECRET_KEY saved to .env file.");
-  } catch (error: any) {
-    console.error("Failed to save TUGBOAT_SECRET_KEY to .env file:", error.message);
+    info("Env", "TUGBOAT_SECRET_KEY saved to .env file.");
+  } catch (e: any) {
+    error("Env", `Failed to save TUGBOAT_SECRET_KEY to .env file: ${e.message}`);
   }
 
   // Send the key to PHONE_HOME_URL if defined
@@ -44,9 +45,9 @@ export function ensureSecretKey() {
       secretKey: newKey,
     })
     .then(() => {
-      console.log("New secret key sent to PHONE_HOME_URL.");
+      info("Env", "TUGBOAT_SECRET_KEY sent to PHONE_HOME_URL.");
     })
-    .catch(error => {
-      console.error("Failed to send secret key to PHONE_HOME_URL:", error.message);
+    .catch(e => {
+      error("Env", `Failed to send TUGBOAT_SECRET_KEY to PHONE_HOME_URL: ${e.message}`);
     });
 }

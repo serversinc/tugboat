@@ -1,6 +1,6 @@
 import { Context } from "hono";
 import { DockerService } from "../services/Docker";
-import { httpService } from "../services/HttpService";
+import { httpService } from "../services/Http";
 
 import path from "path";
 import os from "os";

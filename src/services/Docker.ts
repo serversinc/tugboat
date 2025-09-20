@@ -2,19 +2,18 @@ import Docker, { AuthConfig } from "dockerode";
 
 import dotenv from "dotenv";
 import { normalizeContainer } from "../utils/transformers";
+import { error, info } from "../utils/console";
 dotenv.config();
 
 export class DockerService {
+
+  public name = "Docker";
+
   public docker: Docker;
 
   constructor() {
-    if (process.env.DOCKER_PLATFORM === "windows") {
-      this.docker = new Docker({ socketPath: "//./pipe/docker_engine" });
-    } else {
-      this.docker = new Docker({ socketPath: "/var/run/docker.sock" });
-    }
-
-    console.log("Docker client initialized");
+    this.docker = new Docker({ socketPath: "/var/run/docker.sock" });
+    info(this.name, "Initialized Docker client");
   }
 
   async listContainers(): Promise<any[]> {
@@ -64,7 +63,7 @@ export class DockerService {
 
   async pullImage(name: string, auth?: { username?: string; password?: string; registry?: string }): Promise<void> {
     return new Promise((resolve, reject) => {
-      console.log(`Attempting to pull image: ${name}`);
+      info(this.name, `Attempting to pull image: ${name}`);
 
       let authconfig: AuthConfig | undefined = undefined;
       if (auth && auth.username && auth.password && auth.registry) {
@@ -77,16 +76,16 @@ export class DockerService {
 
         this.docker.checkAuth(authconfig, (err: any) => {
           if (err) {
-            console.error(`Error checking auth for image ${name}:`, err);
+            error(this.name, `Authentication failed for image ${name}: ${err.message}`);
             return reject(err);
           }
-          console.log(`Auth check successful for image ${name}`);
+          info(this.name, `Authentication successful for image ${name}`);
         });
       }
 
       this.docker.pull(name, { 'authconfig': authconfig }, (err: any, stream: any) => {
         if (err) {
-          console.error(`Error initiating pull for image ${name}:`, err);
+          error(this.name, `Error pulling image ${name}: ${err.message}`);
           return reject(err);
         }
 
@@ -94,16 +93,16 @@ export class DockerService {
           stream,
           (err, output) => {
             if (err) {
-              console.error(`Error during followProgress for image ${name}:`, err);
+              error(this.name, `Error during followProgress for image ${name}: ${err.message}`);
               return reject(err);
             }
 
-            console.log(`Image ${name} pulled successfully.`);
+            info(this.name, `Successfully pulled image: ${name}`);
             resolve();
           },
           (event: any) => {
             if (event && event.status) {
-              console.log(`Pull progress: ${event.status}`);
+              info(this.name, `Pulling image ${name}: ${event.status} ${event.progress || ''}`);
             }
           }
         );

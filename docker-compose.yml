@@ -3,13 +3,15 @@ services:
     container_name: tugboat
     image: tugboat:latest
     env_file:
-      - .env.linux
+      - .env.local
     ports:
       - "7567:7567"
     volumes:
-       - /var/run/docker.sock:/var/run/docker.sock
-       - ~/tugboat:/tugboat
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ~/tugboat:/tugboat
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
-volumes:
-  tugboat:
-    driver: shared
+networks:
+  default:
+    driver: bridge

@@ -5,7 +5,7 @@ import { DockerService } from "../services/Docker";
 import { demultiplexDockerStream, stripAnsiCodes } from "../utils/transformers";
 import { PassThrough } from "stream";
 import { parsePortString } from "../utils/ports";
-import { httpService } from "../services/HttpService";
+import { httpService } from "../services/Http";
 
 export class ContainerController {
   private docker: DockerService;

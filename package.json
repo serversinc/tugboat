@@ -1,14 +1,13 @@
 {
   "name": "tugboat",
-  "version": "1.0.1",
+  "version": "2.0.0",
   "description": "A node.js agent for managing remote Docker containers.",
   "main": "index.js",
   "scripts": {
     "dev": "nodemon --exec ts-node src/app.ts",
     "build": "tsc",
     "start": "node dist/app.js",
-    "docker:build": "docker build -t tugboat .",
-    "docker:run": "docker stop tugboat && docker rm tugboat && docker run --name tugboat --env-file ./tugboat/.env -p 7567:7567 -v /var/run/docker.sock:/var/run/docker.sock -v //./pipe/docker_engine://./pipe/docker_engine -v \"/tugboat:/tugboat\" tugboat:latest"
+    "docker:build": "docker build -t tugboat ."
   },
   "keywords": [],
   "author": "",
@@ -17,6 +16,7 @@
     "@hono/node-server": "^1.13.8",
     "@hono/zod-validator": "^0.4.3",
     "axios": "^1.8.3",
+    "chalk": "^5.6.2",
     "dockerode": "^4.0.4",
     "dotenv": "^16.4.7",
     "hono": "^4.7.4",

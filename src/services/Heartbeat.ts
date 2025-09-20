@@ -1,84 +1,166 @@
 import os from "os";
-import axios from "axios";
+import { execSync } from "child_process";
 import { Container } from "dockerode";
-import { httpService } from "./HttpService";
-
+import { httpService } from "./Http";
 import { DockerService } from "./Docker";
+import { info, warn, error } from "../utils/console";
 
 export class HeartbeatService {
-  private interval: NodeJS.Timeout | null = null;
+  public readonly name = "Heartbeat";
 
-  private docker: DockerService;
+  private aliveInterval: NodeJS.Timeout | null = null;
+  private metricsInterval: NodeJS.Timeout | null = null;
+
+  private docker: DockerService = null as unknown as DockerService;
+  private defaultIface: string | null = null;
+
+  private lastNetStats: { rx: number; tx: number } | null = null;
 
   constructor(dockerService: DockerService) {
+    if (!process.env.TUGBOAT_PHONE_HOME_URL) {
+      warn(this.name, "TUGBOAT_PHONE_HOME_URL is not set. Heartbeat service will not start.");
+      return;
+    }
+
     this.docker = dockerService;
-    console.log("Heartbeat service initialized");
+    this.defaultIface = this.getDefaultInterface();
+    info(this.name, `Initialized. Tracking interface: ${this.defaultIface ?? "none"}`);
   }
 
   start(): void {
-    if (this.interval) {
-      console.warn("Heartbeat service is already running.");
+
+    if(!this.docker) return;
+
+    if (this.aliveInterval || this.metricsInterval) {
+      warn(this.name, "Service is already running.");
       return;
     }
 
-    this.sendHeartbeat(); // Initial call right away
+    // Send alive heartbeat every 90 seconds
+    this.aliveInterval = setInterval(() => {
+      this.sendAliveHeartbeat();
+    }, 60_000);
 
-    if(!process.env.TUGBOAT_PHONE_HOME_INTERVAL) {
-      console.warn("TUGBOAT_PHONE_HOME_INTERVAL is not set. Heartbeat service will not start.");
-      return;
-    }
+    // Send full metrics every 5 minutes
+    this.metricsInterval = setInterval(() => {
+      this.sendMetricsHeartbeat();
+    }, 300_000);
 
-    this.interval = setInterval(() => {
-      this.sendHeartbeat();
-    }, parseInt(process.env.TUGBOAT_PHONE_HOME_INTERVAL as string));
+    // Kick off immediately
+    this.sendAliveHeartbeat();
+    this.sendMetricsHeartbeat();
 
-    console.log("Heartbeat service started");
+    info(this.name, "Service started.");
   }
 
-  stop() {
-    if (this.interval) {
-      clearInterval(this.interval);
-      this.interval = null;
-      console.log("Heartbeat service stopped");
+  stop(): void {
+    if (this.aliveInterval) clearInterval(this.aliveInterval);
+    if (this.metricsInterval) clearInterval(this.metricsInterval);
+    this.aliveInterval = null;
+    this.metricsInterval = null;
+    info(this.name, "Service stopped.");
+  }
+
+  private async sendAliveHeartbeat(): Promise<void> {
+    try {
+      await httpService.post({ type: "alive" });
+      info(this.name, "Sent alive heartbeat.");
+    } catch (err) {
+      error(this.name, `Alive heartbeat failed: ${(err as Error).message}`);
     }
   }
 
-  async getContainers(): Promise<Container[]> {
+  private async sendMetricsHeartbeat(): Promise<void> {
+    try {
+      const containers = await this.getContainers();
+      const usage = await this.getUsage();
+      const disk = this.getDiskUsage();
+      const network = this.getNetworkUsage();
+
+      await httpService.post({
+        type: "metrics",
+        containers,
+        usage,
+        disk,
+        network,
+      });
+
+      info(this.name, "Sent metrics heartbeat.");
+    } catch (err) {
+      error(this.name, `Metrics heartbeat failed: ${(err as Error).message}`);
+    }
+  }
+
+  private async getContainers(): Promise<Container[]> {
     return this.docker.listContainers();
   }
 
-  async getUsage(): Promise<any> {
-    const cpu = {
-      cores: os.cpus().length,
-      load: os.loadavg(),
-    };
+  private getDiskUsage() {
+    const output = execSync("df -h --output=source,fstype,size,used,avail,pcent,target -x tmpfs -x devtmpfs").toString();
+    const lines = output.trim().split("\n");
+    const headers = lines[0].split(/\s+/);
+    return lines.slice(1).map(line => {
+      const parts = line.split(/\s+/);
+      const disk: Record<string, string> = {};
+      headers.forEach((h, i) => (disk[h] = parts[i]));
+      return disk;
+    });
+  }
 
-    const memory = {
-      total: Math.ceil(os.totalmem() / 1024 / 1024 / 1024) + "GB",
-      free: Math.ceil(os.freemem() / 1024 / 1024 / 1024) + "GB",
-    };
-
+  private async getUsage() {
     return {
-      cpu,
-      memory,
-      uptime: Math.ceil(os.uptime() / 60),
+      cpu: {
+        cores: os.cpus().length,
+        load: os.loadavg()[0],
+      },
+      memory: {
+        total: Math.ceil(os.totalmem() / 1024 / 1024 / 1024),
+        free: Math.ceil(os.freemem() / 1024 / 1024 / 1024),
+      },
+      uptimeMinutes: Math.floor(os.uptime() / 60),
     };
   }
 
-  async sendHeartbeat(): Promise<void> {
-    const containers = await this.getContainers();
-    const usage = await this.getUsage();
-
+  private getDefaultInterface(): string | null {
     try {
-      await httpService.post({
-        type: "heartbeat",
-        containers,
-        usage,
-      });
-
-      console.log("Successfully phoned home.");
-    } catch (error) {
-      console.error("Error sending heartbeat:", error);
+      const output = execSync("ip route show default").toString();
+      const match = output.match(/dev\s+(\S+)/);
+      return match ? match[1] : null;
+    } catch {
+      warn(this.name, "Could not detect default interface.");
+      return null;
     }
+  }
+
+  private getNetworkUsage() {
+    if (!this.defaultIface) return null;
+
+    const output = execSync("cat /proc/net/dev").toString();
+    const lines = output.trim().split("\n").slice(2); // skip headers
+
+    const ifaceLine = lines.find(l => l.trim().startsWith(this.defaultIface + ":"));
+    if (!ifaceLine) return null;
+
+    const parts = ifaceLine.split(/[:\s]+/).filter(Boolean);
+    // Format: iface, rxBytes, rxPackets, rxErrs, rxDrop, rxFifo, rxFrame, rxCompressed, rxMulticast,
+    //         txBytes, txPackets, txErrs, txDrop, txFifo, txColls, txCarrier, txCompressed
+    const rx = parseInt(parts[1], 10);
+    const tx = parseInt(parts[9], 10);
+
+    let deltas = null;
+    if (this.lastNetStats) {
+      deltas = {
+        rxDelta: rx - this.lastNetStats.rx,
+        txDelta: tx - this.lastNetStats.tx,
+      };
+    }
+
+    this.lastNetStats = { rx, tx };
+
+    return {
+      iface: this.defaultIface,
+      total: { rx, tx },
+      deltas,
+    };
   }
 }
