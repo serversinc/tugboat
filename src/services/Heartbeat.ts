@@ -114,8 +114,8 @@ export class HeartbeatService {
         load: os.loadavg()[0],
       },
       memory: {
-        total: Math.ceil(os.totalmem() / 1024 / 1024 / 1024),
-        free: Math.ceil(os.freemem() / 1024 / 1024 / 1024),
+        total: Math.ceil(os.totalmem() / 1024 / 1024), // MB
+        free: Math.ceil(os.freemem() / 1024 / 1024)    // MB
       },
       uptimeMinutes: Math.floor(os.uptime() / 60),
     };
