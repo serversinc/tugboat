@@ -2,11 +2,19 @@ import { ChildProcessByStdio, spawn } from "child_process";
 import { error, info } from "../utils/console";
 import { httpService } from "./Http";
 import { Readable } from "stream";
+import { DockerService } from "./Docker";
 
 export class WatcherService {
-private spawnedProcess: ChildProcessByStdio<null, Readable, Readable> | null = null;
+  public readonly name = "Watcher";
+
+  private docker: DockerService = null as unknown as DockerService;
+  private spawnedProcess: ChildProcessByStdio<null, Readable, Readable> | null = null;
   private buffer = "";
   private retryDelay = 5000;
+
+  constructor(dockerService: DockerService) {
+    this.docker = dockerService;
+  }
 
   // Start watching the Docker events
   start() {
@@ -83,15 +91,59 @@ private spawnedProcess: ChildProcessByStdio<null, Readable, Readable> | null = n
   private async handleEvent(event: DockerEvent) {
     if (!this.shouldForward(event)) return;
 
+    let payload: Record<string, any> = {
+      event: event.Action,
+      type: event.Type,
+      id: event.Actor.ID,
+      attributes: event.Actor.Attributes,
+    };
+
+    // Enrich with container details on creation
+    if (event.Action === "create") {
+      const inspect = await this.docker.getContainer(event.Actor.ID);
+
+      const ports = inspect.NetworkSettings.Ports
+        ? Object.entries(inspect.NetworkSettings.Ports).map(([port, mappings]) => ({
+            port,
+            mappings: mappings ? mappings.map(m => ({ hostIp: m.HostIp, hostPort: m.HostPort })) : [],
+          }))
+        : null;
+
+      const environment = inspect.Config.Env
+        ? inspect.Config.Env.map(env => {
+            const [key, ...rest] = env.split("=");
+            return { key, value: rest.join("=") };
+          })
+        : null;
+
+      const exposed_ports = inspect.Config.ExposedPorts ? Object.keys(inspect.Config.ExposedPorts) : null;
+
+      payload["attributes"] = {
+        id: inspect.Id,
+        image: inspect.Config.Image.split(":")[0],
+        image_tag: inspect.Config.Image.split(":")[1] || "latest",
+        name: inspect.Name.replace(/^\//, ""),
+        state: inspect.State.Status,
+        labels: inspect.Config.Labels || null,
+        mounts: inspect.Mounts || null,
+        command: inspect.Config.Cmd || null,
+        volumes: inspect.Config.Volumes || null,
+        exposed_ports: exposed_ports || null,
+        ports: ports,
+        environment: environment,
+        created: inspect.Created,
+        user: inspect.Config.User || null,
+        entrypoint: inspect.Config.Entrypoint || null,
+        networks: inspect.NetworkSettings.Networks || null,
+        network_mode: inspect.HostConfig.NetworkMode || null,
+        restart_policy: inspect.HostConfig.RestartPolicy || null,
+      };
+    }
+
     try {
       await httpService.post({
         type: "docker_event",
-        payload: {
-          event: event.Action,
-          type: event.Type,
-          id: event.Actor.ID,
-          attributes: event.Actor.Attributes,
-        },
+        payload,
       });
     } catch (err) {
       error("Watcher", `Failed to forward event: ${(err as Error).message}`);
