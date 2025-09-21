@@ -23,7 +23,7 @@ checkEnv();
 ensureSecretKey();
 
 const dockerService = new DockerService();
-const watcherService = new WatcherService();
+const watcherService = new WatcherService(dockerService);
 const heartbeat = new HeartbeatService(dockerService);
 
 watcherService.start();
