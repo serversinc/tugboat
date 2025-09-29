@@ -69,6 +69,14 @@ export class ContainerController {
         });
       }
 
+      const networks = options.networks?.length ? options.networks : ["tugboat"];
+      const EndpointsConfig = networks.reduce((acc: Record<string, any>, net: string) => {
+        if (!["host", "bridge", "none"].includes(net)) {
+          acc[net] = { Aliases: [options.name] };
+        }
+        return acc;
+      }, {} as Record<string, any>);
+
       const container = await this.docker.createContainer({
         name: options.name,
         Image: options.image,
@@ -78,15 +86,11 @@ export class ContainerController {
         HostConfig: {
           Binds: options.volumes ?? [],
           PortBindings: options.portBindings,
-          NetworkMode: options.networks?.[0] || "tugboat",
+          NetworkMode: networks[0],
         },
         Cmd: options.command,
         NetworkingConfig: {
-          EndpointsConfig: {
-            [options.networks?.[0] || "tugboat"]: {
-              Aliases: [options.name],
-            },
-          },
+          EndpointsConfig,
         },
         Entrypoint: options.entrypoint,
         WorkingDir: options.workingdir,
