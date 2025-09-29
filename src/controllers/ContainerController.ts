@@ -1,11 +1,9 @@
 import { Context } from "hono";
+import { PassThrough } from "stream";
 import { streamSSE } from "hono/streaming";
 
 import { DockerService } from "../services/Docker";
 import { demultiplexDockerStream, stripAnsiCodes } from "../utils/transformers";
-import { PassThrough } from "stream";
-import { parsePortString } from "../utils/ports";
-import { httpService } from "../services/Http";
 
 export class ContainerController {
   private docker: DockerService;
@@ -71,26 +69,28 @@ export class ContainerController {
         });
       }
 
-      const ports = parsePortString(options.ports);
+      const networks = options.networks?.length ? options.networks : ["tugboat"];
+      const EndpointsConfig = networks.reduce((acc: Record<string, any>, net: string) => {
+        if (!["host", "bridge", "none"].includes(net)) {
+          acc[net] = { Aliases: [options.name] };
+        }
+        return acc;
+      }, {} as Record<string, any>);
 
       const container = await this.docker.createContainer({
         name: options.name,
         Image: options.image,
         Env: options.environment,
         Labels: options.labels,
-        ExposedPorts: ports.ExposedPorts,
+        ExposedPorts: options.exposedPorts,
         HostConfig: {
           Binds: options.volumes ?? [],
-          PortBindings: ports.PortBindings,
-          NetworkMode: options.networks?.[0] || "tugboat",
+          PortBindings: options.portBindings,
+          NetworkMode: networks[0],
         },
         Cmd: options.command,
         NetworkingConfig: {
-          EndpointsConfig: {
-            [options.networks?.[0] || "tugboat"]: {
-              Aliases: [options.name],
-            },
-          },
+          EndpointsConfig,
         },
         Entrypoint: options.entrypoint,
         WorkingDir: options.workingdir,
