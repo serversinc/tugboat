@@ -1,11 +1,9 @@
 import { Context } from "hono";
+import { PassThrough } from "stream";
 import { streamSSE } from "hono/streaming";
 
 import { DockerService } from "../services/Docker";
 import { demultiplexDockerStream, stripAnsiCodes } from "../utils/transformers";
-import { PassThrough } from "stream";
-import { parsePortString } from "../utils/ports";
-import { httpService } from "../services/Http";
 
 export class ContainerController {
   private docker: DockerService;
@@ -71,17 +69,15 @@ export class ContainerController {
         });
       }
 
-      const ports = parsePortString(options.ports);
-
       const container = await this.docker.createContainer({
         name: options.name,
         Image: options.image,
         Env: options.environment,
         Labels: options.labels,
-        ExposedPorts: ports.ExposedPorts,
+        ExposedPorts: options.exposedPorts,
         HostConfig: {
           Binds: options.volumes ?? [],
-          PortBindings: ports.PortBindings,
+          PortBindings: options.portBindings,
           NetworkMode: options.networks?.[0] || "tugboat",
         },
         Cmd: options.command,
