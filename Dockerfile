@@ -1,11 +1,11 @@
 # ---- Builder Stage ----
-FROM node:20-slim AS builder
+FROM node:20-bookworm-slim AS builder
 
 WORKDIR /app
 
-# Install deps (dev included for TypeScript build)
+# Install dependencies and build TypeScript
 COPY package*.json tsconfig.json ./
-RUN npm ci --only=production=false
+RUN npm ci
 
 # Copy source and build
 COPY . .
@@ -13,27 +13,23 @@ RUN npm run build
 
 
 # ---- Production Stage ----
-FROM node:20-slim
+FROM node:20-bookworm-slim
 
 WORKDIR /app
 
-# Install utilities:
-# - iproute2 → provides `ip` command
-# - docker.io → docker CLI
-# - curl/git/cron → for health checks, vcs, scheduling
+# Install only what we actually need at runtime
 RUN apt-get update && \
-    apt-get install -y \
-      iproute2 \
-      docker.io \
+    apt-get install -y --no-install-recommends \
       git \
+      ca-certificates \
       curl \
-      cron && \
-    rm -rf /var/lib/apt/lists/*
+      iproute2 \
+    && rm -rf /var/lib/apt/lists/*
 
-# Copy built code and dependencies
-COPY --from=builder /app/dist ./dist
+# Copy built code and runtime deps
+COPY --from=builder /app/build ./build
+COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/node_modules ./node_modules
-COPY package*.json ./
 
 # Default command
-CMD ["node", "dist/app.js"]
+CMD ["node", "build/app.js"]
