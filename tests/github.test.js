@@ -49,8 +49,8 @@ describe("GitHub API", () => {
 
       // Use a public repo for testing, no token needed for public
       const payload = {
-        repo: "sst/open-next",
-        branch: "main",
+        repo: "dmdboi/test-express-api",
+        branch: "master",
         token: "dummy",
       };
 
@@ -67,7 +67,7 @@ describe("GitHub API", () => {
       expect(data.success).toBe(true);
 
       const targetDir = path.resolve(process.cwd(), "../tugboat", payload.repo);
-      createdDirs.push(targetDir);
+      createdDirs.push(targetDir.split(path.sep)[0]);
     });
   });
 });
