@@ -14,7 +14,7 @@ import { createNetworkSchema } from "../validators/Networks";
 import { info } from "../utils/console";
 
 export class Application {
-  private app: Hono;
+  public app: Hono;
 
   constructor(containerController: ContainerController, imageController: ImageController, githubController: GithubController, networkController: NetworkController, composeController: ComposeController) {
     this.app = new Hono();
