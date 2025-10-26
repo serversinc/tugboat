@@ -1,9 +1,13 @@
 import Docker, { AuthConfig } from "dockerode";
+import { exec } from "child_process";
+import { promisify } from "util";
 
 import dotenv from "dotenv";
 import { normalizeContainer } from "../utils/transformers";
 import { error, info } from "../utils/console";
 dotenv.config();
+
+const execAsync = promisify(exec);
 
 export class DockerService {
 
@@ -128,5 +132,20 @@ export class DockerService {
       }
       throw err;
     }
+  }
+
+  /** COMPOSE */
+  async startCompose(directory: string): Promise<void> {
+    const command = `docker-compose -f ${directory}/docker-compose.yml up -d`;
+    info(this.name, `Starting compose in ${directory}`);
+    await execAsync(command);
+    info(this.name, `Compose started successfully in ${directory}`);
+  }
+
+  async stopCompose(directory: string): Promise<void> {
+    const command = `docker-compose -f ${directory}/docker-compose.yml down`;
+    info(this.name, `Stopping compose in ${directory}`);
+    await execAsync(command);
+    info(this.name, `Compose stopped successfully in ${directory}`);
   }
 }

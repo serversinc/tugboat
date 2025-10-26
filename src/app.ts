@@ -7,6 +7,7 @@ import { Application } from "./services/Server";
 import { ContainerController } from "./controllers/ContainerController";
 import { GithubController } from "./controllers/GithubController";
 import { ImageController } from "./controllers/ImageController";
+import { ComposeController } from "./controllers/ComposeController";
 
 // Services
 import { HeartbeatService } from "./services/Heartbeat";
@@ -33,7 +34,8 @@ const containerController = new ContainerController(dockerService);
 const networkController = new NetworkController(dockerService);
 const imageController = new ImageController(dockerService);
 const githubController = new GithubController();
+const composeController = new ComposeController(dockerService);
 
-const application = new Application(containerController, imageController, githubController, networkController);
+const application = new Application(containerController, imageController, githubController, networkController, composeController);
 
 application.start();

@@ -9,13 +9,14 @@ import { createContainerSchema } from "../validators/Containers";
 import { createImageSchema, pullImageSchema } from "../validators/Images";
 import { GithubController } from "../controllers/GithubController";
 import { NetworkController } from "../controllers/NetworkController";
+import { ComposeController } from "../controllers/ComposeController";
 import { createNetworkSchema } from "../validators/Networks";
 import { info } from "../utils/console";
 
 export class Application {
   private app: Hono;
 
-  constructor(containerController: ContainerController, imageController: ImageController, githubController: GithubController, networkController: NetworkController) {
+  constructor(containerController: ContainerController, imageController: ImageController, githubController: GithubController, networkController: NetworkController, composeController: ComposeController) {
     this.app = new Hono();
 
     this.app.use(cors());
@@ -69,6 +70,10 @@ export class Application {
 
     // Github
     this.app.post("/github/pull", githubController.pull.bind(githubController));
+
+    // Compose
+    this.app.post("/compose/start", composeController.start.bind(composeController));
+    this.app.post("/compose/stop", composeController.stop.bind(composeController));
   }
 
   start() {
