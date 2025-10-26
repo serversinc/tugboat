@@ -137,7 +137,7 @@ export class WatcherService {
         networks: inspect.NetworkSettings.Networks || null,
         network_mode: inspect.HostConfig.NetworkMode || null,
         restart_policy: inspect.HostConfig.RestartPolicy || null,
-        application_id: inspect.Config.Labels ? inspect.Config.Labels["application_id"] || null : null,
+        application_id: inspect.Config.Labels ? inspect.Config.Labels["com.serversinc.app_id"] || null : null,
       };
     }
 
