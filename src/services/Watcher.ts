@@ -3,6 +3,7 @@ import { error, info } from "../utils/console";
 import { httpService } from "./Http";
 import { Readable } from "stream";
 import { DockerService } from "./Docker";
+import { ContainerInspectInfo } from "dockerode";
 
 export class WatcherService {
   public readonly name = "Watcher";
@@ -102,42 +103,18 @@ export class WatcherService {
     if (event.Action === "create") {
       const inspect = await this.docker.getContainer(event.Actor.ID);
 
-      const ports = inspect.NetworkSettings.Ports
-        ? Object.entries(inspect.NetworkSettings.Ports).map(([port, mappings]) => ({
-            port,
-            mappings: mappings ? mappings.map(m => ({ hostIp: m.HostIp, hostPort: m.HostPort })) : [],
-          }))
-        : null;
-
-      const environment = inspect.Config.Env
-        ? inspect.Config.Env.map(env => {
-            const [key, ...rest] = env.split("=");
-            return { key, value: rest.join("=") };
-          })
-        : null;
-
-      const exposed_ports = inspect.Config.ExposedPorts ? Object.keys(inspect.Config.ExposedPorts) : null;
+      const environment = this.getDetailsFromEnv(inspect);
 
       payload["attributes"] = {
         id: inspect.Id,
-        image: inspect.Config.Image.split(":")[0],
-        image_tag: inspect.Config.Image.split(":")[1] || "latest",
         name: inspect.Name.replace(/^\//, ""),
+        image: inspect.Config.Image.split(":")[0],
+        tag: inspect.Config.Image.split(":")[1],
         state: inspect.State.Status,
-        labels: inspect.Config.Labels || null,
-        mounts: inspect.Mounts || null,
-        command: inspect.Config.Cmd || null,
-        volumes: inspect.Config.Volumes || null,
-        exposed_ports: exposed_ports || null,
-        ports: ports,
-        environment: environment,
         created: inspect.Created,
-        user: inspect.Config.User || null,
-        entrypoint: inspect.Config.Entrypoint || null,
-        networks: inspect.NetworkSettings.Networks || null,
-        network_mode: inspect.HostConfig.NetworkMode || null,
-        restart_policy: inspect.HostConfig.RestartPolicy || null,
-        application_id: inspect.Config.Labels ? inspect.Config.Labels["com.serversinc.app_id"] || null : null,
+        application_id: environment.application_id,
+        environment_id: environment.environment_id,
+        deployment_id: environment.deployment_id,
       };
     }
 
@@ -156,6 +133,23 @@ export class WatcherService {
     if (event.Type !== "container") return false;
     if (event.Action === "stop" || event.Action === "kill") return false;
     return true;
+  }
+
+  private getDetailsFromEnv(inspect: ContainerInspectInfo) {
+    const env = inspect.Config?.Env ?? [];
+
+    const map = Object.fromEntries(
+      env.map(entry => {
+        const [key, ...rest] = entry.split("=");
+        return [key, rest.join("=")];
+      })
+    );
+
+    return {
+      application_id: map.SERVERSINC_APP_ID ?? null,
+      environment_id: map.SERVERSINC_ENV_ID ?? null,
+      deployment_id: map.SERVERSINC_DEPLOYMENT_ID ?? null,
+    };
   }
 }
 
