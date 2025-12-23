@@ -4,6 +4,7 @@ import { streamSSE } from "hono/streaming";
 
 import { DockerService } from "../services/Docker";
 import { demultiplexDockerStream, stripAnsiCodes } from "../utils/transformers";
+import { EndpointSettings } from "dockerode";
 
 export class ContainerController {
   private docker: DockerService;
@@ -69,13 +70,13 @@ export class ContainerController {
         });
       }
 
-      const networks = options.networks?.length ? options.networks : ["tugboat"];
-      const EndpointsConfig = networks.reduce((acc: Record<string, any>, net: string) => {
+      const networks = options.networks;
+      const EndpointsConfig = networks.reduce((acc: Record<string, EndpointSettings>, net: string) => {
         if (!["host", "bridge", "none"].includes(net)) {
           acc[net] = { Aliases: [options.name] };
         }
         return acc;
-      }, {} as Record<string, any>);
+      }, {});
 
       const container = await this.docker.createContainer({
         name: options.name,
@@ -83,11 +84,7 @@ export class ContainerController {
         Env: options.environment,
         Labels: options.labels,
         ExposedPorts: options.exposedPorts,
-        HostConfig: {
-          Binds: options.volumes ?? [],
-          PortBindings: options.portBindings,
-          NetworkMode: networks[0],
-        },
+        HostConfig: options.hostConfig,
         Cmd: options.command,
         NetworkingConfig: {
           EndpointsConfig,
