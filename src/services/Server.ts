@@ -18,7 +18,7 @@ export function startServer(containerHandlers: any, imageHandlers: any, networkH
   app.use("*", async (ctx, next) => {
     const path = ctx.req.path;
 
-    const authKey = process.env.TUGBOAT_SECRET_KEY;
+    const authKey = process.env.SECRET_KEY;
     const requestKey = ctx.req.header("x-auth-key");
 
     if (!authKey || requestKey !== authKey) {
@@ -66,7 +66,7 @@ export function startServer(containerHandlers: any, imageHandlers: any, networkH
 
   serve(
     {
-      port: port || (process.env.TUGBOAT_PORT ? parseInt(process.env.TUGBOAT_PORT) : 3000),
+      port: port || (process.env.PORT ? parseInt(process.env.PORT) : 3000),
       fetch: app.fetch.bind(app),
     },
     data => {

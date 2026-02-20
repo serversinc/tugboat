@@ -8,7 +8,7 @@ import { createContainerHandlers } from "./containers/handlers";
 import { createImageHandlers } from "./images/handlers";
 
 // Services
-import { HeartbeatService } from "./services/Heartbeat";
+// Heartbeat service removed — no-op
 import { DockerService } from "./services/Docker";
 
 import { ensureSecretKey } from "./utils/auth";
@@ -23,10 +23,8 @@ ensureSecretKey();
 
 const dockerService = new DockerService();
 const watcherService = new WatcherService(dockerService);
-const heartbeat = new HeartbeatService(dockerService);
 
 watcherService.start();
-heartbeat.start();
 
 const containerHandlers = createContainerHandlers(dockerService);
 const imageHandlers = createImageHandlers(dockerService);

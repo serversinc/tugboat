@@ -3,8 +3,8 @@
 import { info } from "./console";
 
 export function checkEnv() {
-  const requiredEnv = ["TUGBOAT_PORT"];
-  const optionalEnv = ["CORE_URL", "TUGBOAT_ENABLE_HEARTBEAT"];
+  const requiredEnv = ["PORT"];
+  const optionalEnv = ["CORE_URL", "ENABLE_HEARTBEAT"];
 
   for (const env of requiredEnv) {
     if (!process.env[env]) {

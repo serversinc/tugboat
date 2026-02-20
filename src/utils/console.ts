@@ -1,11 +1,11 @@
 import pino from "pino";
 
-// Log level can be controlled via env var TUGBOAT_LOG_LEVEL (default: info)
-const level = process.env.TUGBOAT_LOG_LEVEL || "info";
+// Log level can be controlled via env var LOG_LEVEL (default: info)
+const level = process.env.LOG_LEVEL || "info";
 
 // If pretty printing is desired in non-production, pino-pretty can be used by setting
-// the environment var TUGBOAT_LOG_PRETTY=true. pino-pretty is listed as optionalDependency.
-const pretty = process.env.TUGBOAT_LOG_PRETTY === "true";
+// the environment var LOG_PRETTY=true. pino-pretty is listed as optionalDependency.
+const pretty = process.env.LOG_PRETTY === "true";
 
 const pinoOptions: pino.LoggerOptions = {
   level,

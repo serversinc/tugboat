@@ -54,7 +54,7 @@ curl -X GET http://localhost:7567/v1/containers/:id
 
 - `PORT`: Listening port for the agent
 - `SECRET_KEY`: The secret key for authenticating requests to the agent
-- `PHONE_HOME_URL`: The URL to which the agent will send events.
+- `CORE_URL`: The URL to which the agent will send events.
 - `ENABLE_HEARTBEAT`: Set to `false` to disable heartbeat functionality. Defaults to enabled if `CORE_URL` is set.
 - `HOME`: The path to the Agent directory on your host machine. This is where the agent will store its data.
 

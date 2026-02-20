@@ -136,7 +136,7 @@ export function createContainerHandlers(dockerService: DockerService) {
       // Check for x-auth-key query parameter
       const authKey = ctx.req.query("x-auth-key");
       const tail = ctx.req.query("tail") || 200;
-      const requestKey = process.env.TUGBOAT_SECRET_KEY;
+      const requestKey = process.env.SECRET_KEY;
 
       if (!authKey || requestKey !== authKey) {
         return ctx.json({ error: "Unauthorized" }, 401);
