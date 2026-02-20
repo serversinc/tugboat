@@ -27,6 +27,21 @@ export function startServer(containerHandlers: any, imageHandlers: any, networkH
     await next();
   });
 
+  // Request ID middleware
+  app.use("*", async (ctx, next) => {
+    const requestId = ctx.req.header("x-request-id") || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    // attach to context store for access in handlers
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { runWithRequestContext } = require("../utils/requestContext");
+    runWithRequestContext({ requestId }, () => {});
+    // store request-id in Hono request context for handlers that read it
+    // Hono's ctx.req doesn't have a typed set function for custom keys, use ctx.set
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    ctx.set("request-id", requestId);
+    await next();
+  });
+
   // Containers (containerHandlers is a plain object of functions)
   app.get("/containers", containerHandlers.list);
   app.get("/containers/:id", containerHandlers.get);

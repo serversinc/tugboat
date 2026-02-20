@@ -21,17 +21,30 @@ if (pretty) {
 }
 
 export function info(prefix: string, message: string, meta?: Record<string, unknown>) {
-  logger.info({ prefix, ...meta }, message);
+  // include request id if available
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { getRequestId } = require("./requestContext");
+  const requestId = getRequestId();
+  logger.info({ prefix, requestId, ...meta }, message);
 }
 
 export function warn(prefix: string, message: string, meta?: Record<string, unknown>) {
-  logger.warn({ prefix, ...meta }, message);
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { getRequestId } = require("./requestContext");
+  const requestId = getRequestId();
+  logger.warn({ prefix, requestId, ...meta }, message);
 }
 
 export function error(prefix: string, message: string, meta?: Record<string, unknown>) {
-  logger.error({ prefix, ...meta }, message);
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { getRequestId } = require("./requestContext");
+  const requestId = getRequestId();
+  logger.error({ prefix, requestId, ...meta }, message);
 }
 
 export function success(prefix: string, message: string, meta?: Record<string, unknown>) {
-  logger.info({ prefix, success: true, ...meta }, message);
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { getRequestId } = require("./requestContext");
+  const requestId = getRequestId();
+  logger.info({ prefix, requestId, success: true, ...meta }, message);
 }

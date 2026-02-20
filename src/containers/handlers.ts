@@ -4,6 +4,7 @@ import { streamSSE } from "hono/streaming";
 
 import { demultiplexDockerStream, stripAnsiCodes } from "../utils/transformers";
 import { DockerService } from "../services/Docker";
+import { info } from "../utils/console";
 
 export function createContainerHandlers(dockerService: DockerService) {
   if (!dockerService) throw new Error("Docker service is required");
