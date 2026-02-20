@@ -17,6 +17,7 @@
     "@hono/zod-validator": "^0.4.3",
     "axios": "^1.8.3",
     "chalk": "^5.6.2",
+    "pino": "^8.19.0",
     "dockerode": "^4.0.4",
     "dotenv": "^16.4.7",
     "hono": "^4.7.4",
@@ -28,6 +29,9 @@
     "nodemon": "^3.1.9",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.2"
+  },
+  "optionalDependencies": {
+    "pino-pretty": "^9.6.0"
   },
   "repository": {
     "url": "https://github.com/serversinc/agent"

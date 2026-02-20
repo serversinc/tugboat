@@ -1,17 +1,37 @@
-import chalk from "chalk";
+import pino from "pino";
+
+// Log level can be controlled via env var TUGBOAT_LOG_LEVEL (default: info)
+const level = process.env.TUGBOAT_LOG_LEVEL || "info";
+
+// If pretty printing is desired in non-production, pino-pretty can be used by setting
+// the environment var TUGBOAT_LOG_PRETTY=true. pino-pretty is listed as optionalDependency.
+const pretty = process.env.TUGBOAT_LOG_PRETTY === "true";
+
+const pinoOptions: pino.LoggerOptions = {
+  level,
+};
+
+let logger: pino.Logger;
+if (pretty) {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const prettyTransport = require("pino-pretty");
+  logger = pino(pinoOptions, prettyTransport({ colorize: true }));
+} else {
+  logger = pino(pinoOptions);
+}
 
 export function info(prefix: string, message: string) {
-  console.log(chalk.blueBright(`[ ${prefix} ]`), message);
+  logger.info({ prefix }, message);
 }
 
 export function warn(prefix: string, message: string) {
-  console.warn(chalk.yellow(`[ ${prefix} ]`), message);
+  logger.warn({ prefix }, message);
 }
 
 export function error(prefix: string, message: string) {
-  console.error(chalk.red(`[ ${prefix} ]`), message);
+  logger.error({ prefix }, message);
 }
 
 export function success(prefix: string, message: string) {
-  console.log(chalk.green(`[ ${prefix} ]`), message);
+  logger.info({ prefix, success: true }, message);
 }
