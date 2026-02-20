@@ -1,6 +1,6 @@
 import axios, { AxiosInstance } from "axios";
 import { config } from "dotenv";
-import { warn } from "../utils/console";
+import { warn, error as logError } from "../utils/console";
 
 config(); // Load environment variables from .env file
 
@@ -33,7 +33,7 @@ class HttpService {
       });
       return response.data;
     } catch (error: any) {
-      console.error(`HTTP POST to ${this.endpoint} failed:`, error.message);
+      logError("Http", `HTTP POST to ${this.endpoint} failed: ${error.message}`);
       throw error;
     }
   }
