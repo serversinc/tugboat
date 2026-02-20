@@ -3,19 +3,19 @@ import { cors } from "hono/cors";
 import { serve } from "@hono/node-server";
 import { zValidator } from "@hono/zod-validator";
 
-import { ImageController } from "../controllers/ImageController";
 import { createContainerHandlers } from "../containers/handlers";
+import { createImageHandlers } from "../images/handlers";
 import { createContainerSchema } from "../validators/Containers";
 import { pullImageSchema } from "../validators/Images";
-import { NetworkController } from "../controllers/NetworkController";
+import { createNetworkHandlers } from "../networks/handlers";
 import { createNetworkSchema } from "../validators/Networks";
 import { info } from "../utils/console";
 
 export class Application {
   private app: Hono;
 
-  // Accept a plain containerHandlers object from the composition root
-  constructor(containerHandlers: any, imageController: ImageController, networkController: NetworkController) {
+  // Accept plain handler objects from the composition root
+  constructor(containerHandlers: any, imageHandlers: any, networkHandlers: any) {
     this.app = new Hono();
 
     this.app.use(cors());
@@ -47,16 +47,16 @@ export class Application {
     this.app.post("/containers/:id/command", containerHandlers.runCommand);
 
     // Images
-    this.app.get("/images", imageController.list.bind(imageController));
-    this.app.get("/images/:id", imageController.get.bind(imageController));
-    this.app.post("/images/pull", zValidator("json", pullImageSchema), imageController.pull.bind(imageController));
-    this.app.delete("/images/:id", imageController.remove.bind(imageController));
+    this.app.get("/images", imageHandlers.list);
+    this.app.get("/images/:id", imageHandlers.get);
+    this.app.post("/images/pull", zValidator("json", pullImageSchema), imageHandlers.pull);
+    this.app.delete("/images/:id", imageHandlers.remove);
 
     // Networks
-    this.app.get("/networks", networkController.list.bind(networkController));
-    this.app.get("/networks/:id", networkController.get.bind(networkController));
-    this.app.post("/networks", zValidator("json", createNetworkSchema), networkController.create.bind(networkController));
-    this.app.delete("/networks/:id", networkController.remove.bind(networkController));
+    this.app.get("/networks", networkHandlers.list);
+    this.app.get("/networks/:id", networkHandlers.get);
+    this.app.post("/networks", zValidator("json", createNetworkSchema), networkHandlers.create);
+    this.app.delete("/networks/:id", networkHandlers.remove);
   }
 
   start() {

@@ -5,7 +5,7 @@ import { Application } from "./services/Server";
 
 // Controllers
 import { createContainerHandlers } from "./containers/handlers";
-import { ImageController } from "./controllers/ImageController";
+import { createImageHandlers } from "./images/handlers";
 
 // Services
 import { HeartbeatService } from "./services/Heartbeat";
@@ -13,7 +13,7 @@ import { DockerService } from "./services/Docker";
 
 import { ensureSecretKey } from "./utils/auth";
 import { checkEnv } from "./utils/env";
-import { NetworkController } from "./controllers/NetworkController";
+import { createNetworkHandlers } from "./networks/handlers";
 import { WatcherService } from "./services/Watcher";
 
 dotenv.config();
@@ -29,9 +29,9 @@ watcherService.start();
 heartbeat.start();
 
 const containerHandlers = createContainerHandlers(dockerService);
-const networkController = new NetworkController(dockerService);
-const imageController = new ImageController(dockerService);
+const imageHandlers = createImageHandlers(dockerService);
+const networkHandlers = createNetworkHandlers(dockerService);
 
-const application = new Application(containerHandlers, imageController, networkController);
+const application = new Application(containerHandlers, imageHandlers, networkHandlers);
 
 application.start();
