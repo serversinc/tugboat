@@ -32,7 +32,7 @@ export function createImageHandlers(dockerService: DockerService) {
 
       info("Image", "Pulled image", { name: options.name });
 
-      return ctx.json({ success: true, message: `image pulled: ${options.name}` });
+      return ctx.json({ success: true, message: "image pulled", image: { name: options.name } });
     } catch (err) {
       return ctx.json({ success: false, error: (err as Error).message }, 500);
     }

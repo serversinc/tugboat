@@ -75,8 +75,9 @@ export function createContainerHandlers(dockerService: DockerService) {
 
       return ctx.json({
         success: true,
-        message: `Container ${containerInfo.Name} created successfully`,
+        message: "container created",
         container: containerInfo,
+        containerName: containerInfo.Name,
       });
     } catch (err) {
       return ctx.json({ success: false, error: (err as Error).message }, 500);
@@ -88,7 +89,7 @@ export function createContainerHandlers(dockerService: DockerService) {
       const id = ctx.req.param("id");
       await dockerService.removeContainer(id);
       info("Container", "Removed container", { id });
-      return ctx.json({ message: "Container removed" });
+      return ctx.json({ success: true, message: "container removed", id });
     } catch (err) {
       return ctx.json({ error: (err as Error).message }, 500);
     }
@@ -99,7 +100,7 @@ export function createContainerHandlers(dockerService: DockerService) {
       const id = ctx.req.param("id");
       await dockerService.restartContainer(id);
       info("Container", "Restarted container", { id });
-      return ctx.json({ message: "Container restarted" });
+      return ctx.json({ success: true, message: "container restarted", id });
     } catch (err) {
       return ctx.json({ error: (err as Error).message }, 500);
     }
@@ -110,7 +111,7 @@ export function createContainerHandlers(dockerService: DockerService) {
       const id = ctx.req.param("id");
       await dockerService.startContainer(id);
       info("Container", "Started container", { id });
-      return ctx.json({ message: "Container started" });
+      return ctx.json({ success: true, message: "container started", id });
     } catch (err) {
       return ctx.json({ error: (err as Error).message }, 500);
     }
@@ -121,7 +122,7 @@ export function createContainerHandlers(dockerService: DockerService) {
       const id = ctx.req.param("id");
       await dockerService.stopContainer(id);
       info("Container", "Stopped container", { id });
-      return ctx.json({ message: "Container stopped" });
+      return ctx.json({ success: true, message: "container stopped", id });
     } catch (err) {
       return ctx.json({ error: (err as Error).message }, 500);
     }
@@ -235,7 +236,8 @@ export function createContainerHandlers(dockerService: DockerService) {
 
       return ctx.json({
         success: true,
-        message: "Command executed successfully",
+        message: "command executed",
+        command,
         output: { stdout: cleanStdout, stderr: cleanStderr },
       });
     } catch (err) {

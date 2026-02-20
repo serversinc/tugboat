@@ -24,7 +24,7 @@ export class HeartbeatService {
 
     this.docker = dockerService;
     this.defaultIface = this.getDefaultInterface();
-    info(this.name, `Initialized. Tracking interface: ${this.defaultIface ?? "none"}`);
+    info(this.name, "Initialized", { interface: this.defaultIface ?? "none" });
   }
 
   start(): void {
@@ -50,7 +50,7 @@ export class HeartbeatService {
     this.sendAliveHeartbeat();
     this.sendMetricsHeartbeat();
 
-    info(this.name, "Service started.");
+    info(this.name, "Service started");
   }
 
   stop(): void {
@@ -58,15 +58,15 @@ export class HeartbeatService {
     if (this.metricsInterval) clearInterval(this.metricsInterval);
     this.aliveInterval = null;
     this.metricsInterval = null;
-    info(this.name, "Service stopped.");
+    info(this.name, "Service stopped");
   }
 
   private async sendAliveHeartbeat(): Promise<void> {
     try {
       await httpService.post({ type: "alive" });
-      info(this.name, "Sent alive heartbeat.");
+      info(this.name, "Sent alive heartbeat");
     } catch (err) {
-      error(this.name, `Alive heartbeat failed: ${(err as Error).message}`);
+      error(this.name, "Alive heartbeat failed", { error: (err as Error).message });
     }
   }
 
@@ -85,9 +85,9 @@ export class HeartbeatService {
         network,
       });
 
-      info(this.name, "Sent metrics heartbeat.");
+      info(this.name, "Sent metrics heartbeat");
     } catch (err) {
-      error(this.name, `Metrics heartbeat failed: ${(err as Error).message}`);
+      error(this.name, "Metrics heartbeat failed", { error: (err as Error).message });
     }
   }
 

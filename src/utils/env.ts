@@ -14,7 +14,7 @@ export function checkEnv() {
 
   for (const env of optionalEnv) {
     if (!process.env[env]) {
-      info("Env", `${env} environment variable is not set, skipping`);
+      info("Env", "Optional env not set", { variable: env });
     }
   }
 }

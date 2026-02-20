@@ -63,7 +63,7 @@ export class DockerService {
 
   async pullImage(name: string, auth?: { username?: string; password?: string; registry?: string }): Promise<void> {
     return new Promise((resolve, reject) => {
-      info(this.name, `Attempting to pull image: ${name}`);
+      info(this.name, "Attempting to pull image", { name });
 
       let authconfig: AuthConfig | undefined = undefined;
       if (auth && auth.username && auth.password && auth.registry) {
@@ -76,16 +76,16 @@ export class DockerService {
 
         this.docker.checkAuth(authconfig, (err: any) => {
           if (err) {
-            error(this.name, `Authentication failed for image ${name}: ${err.message}`);
+            error(this.name, "Authentication failed for image", { name, error: err.message });
             return reject(err);
           }
-          info(this.name, `Authentication successful for image ${name}`);
-        });
+          info(this.name, "Authentication successful for image", { name });
+          });
       }
 
       this.docker.pull(name, { 'authconfig': authconfig }, (err: any, stream: any) => {
         if (err) {
-          error(this.name, `Error pulling image ${name}: ${err.message}`);
+          error(this.name, "Error pulling image", { name, error: err.message });
           return reject(err);
         }
 
@@ -93,16 +93,16 @@ export class DockerService {
           stream,
           (err, output) => {
             if (err) {
-              error(this.name, `Error during followProgress for image ${name}: ${err.message}`);
+              error(this.name, "Error during followProgress for image", { name, error: err.message });
               return reject(err);
             }
 
-            info(this.name, `Successfully pulled image: ${name}`);
+            info(this.name, "Successfully pulled image", { name });
             resolve();
           },
           (event: any) => {
             if (event && event.status) {
-              info(this.name, `Pulling image ${name}: ${event.status} ${event.progress || ''}`);
+              info(this.name, "Image pull progress", { name, status: event.status, progress: event.progress || null });
             }
           }
         );

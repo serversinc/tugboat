@@ -22,9 +22,9 @@ export function ensureSecretKey() {
         return;
       }
     }
-  } catch (e: any) {
-    error("Env", `Failed to read .env file: ${e.message}`);
-  }
+    } catch (e: any) {
+      error("Env", "Failed to read .env file", { error: e.message });
+    }
 
   // Generate a new key if not found
   const newKey = crypto.randomBytes(32).toString("hex");
@@ -35,7 +35,7 @@ export function ensureSecretKey() {
     fs.appendFileSync(envPath, `TUGBOAT_SECRET_KEY=${newKey}\n`);
     info("Env", "TUGBOAT_SECRET_KEY saved to .env file.");
   } catch (e: any) {
-    error("Env", `Failed to save TUGBOAT_SECRET_KEY to .env file: ${e.message}`);
+    error("Env", "Failed to save TUGBOAT_SECRET_KEY to .env file", { error: e.message });
   }
 
   // Send the key to PHONE_HOME_URL if defined
@@ -48,6 +48,6 @@ export function ensureSecretKey() {
       info("Env", "TUGBOAT_SECRET_KEY sent to PHONE_HOME_URL.");
     })
     .catch(e => {
-      error("Env", `Failed to send TUGBOAT_SECRET_KEY to PHONE_HOME_URL: ${e.message}`);
+      error("Env", "Failed to send TUGBOAT_SECRET_KEY to PHONE_HOME_URL", { error: e.message });
     });
 }

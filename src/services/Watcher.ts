@@ -32,15 +32,15 @@ export class WatcherService {
 
     this.spawnedProcess.stdout.on("data", chunk => this.handleChunk(chunk));
     this.spawnedProcess.stderr.on("data", data => {
-      error("Watcher", `Docker events stderr: ${data.toString().trim()}`);
+      error("Watcher", "Docker events stderr", { message: data.toString().trim() });
     });
 
     this.spawnedProcess.on("error", err => {
-      error("Watcher", `Failed to spawn docker events: ${err.message}`);
+      error("Watcher", "Failed to spawn docker events", { error: err.message });
     });
 
     this.spawnedProcess.on("exit", code => {
-      error("Watcher", `Docker events process exited with code ${code}`);
+      error("Watcher", "Docker events process exited", { code });
       this.spawnedProcess = null;
 
       // auto-restart after backoff
@@ -83,7 +83,7 @@ export class WatcherService {
         const event = JSON.parse(line) as DockerEvent;
         this.handleEvent(event);
       } catch (err) {
-        error("Watcher", `Failed to parse Docker event: ${(err as Error).message}`);
+        error("Watcher", "Failed to parse Docker event", { error: (err as Error).message, raw: line });
       }
     }
   }
@@ -124,7 +124,7 @@ export class WatcherService {
         payload,
       });
     } catch (err) {
-      error("Watcher", `Failed to forward event: ${(err as Error).message}`);
+      error("Watcher", "Failed to forward event", { error: (err as Error).message, payload });
     }
   }
 

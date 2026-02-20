@@ -57,7 +57,7 @@ export function startServer(containerHandlers: any, imageHandlers: any, networkH
       fetch: app.fetch.bind(app),
     },
     data => {
-      info("Hono", `Server started on port ${data.port}`);
+      info("Hono", "Server started", { port: data.port });
     },
   );
 }

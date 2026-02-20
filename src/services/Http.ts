@@ -33,7 +33,7 @@ class HttpService {
       });
       return response.data;
     } catch (error: any) {
-      logError("Http", `HTTP POST to ${this.endpoint} failed: ${error.message}`);
+      logError("Http", "HTTP POST failed", { endpoint: this.endpoint, error: error.message });
       throw error;
     }
   }

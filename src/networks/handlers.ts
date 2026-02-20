@@ -54,7 +54,7 @@ export function createNetworkHandlers(dockerService: DockerService) {
       const network = dockerService.docker.getNetwork(id);
       await network.remove();
       info("Network", "Removed network", { id });
-      return ctx.json({ message: "Network removed." });
+      return ctx.json({ success: true, message: "network removed", id });
     } catch (err) {
       return ctx.json({ error: (err as Error).message }, 400);
     }
