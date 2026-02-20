@@ -13,7 +13,7 @@ import { z } from "zod";
  *     },
  *     "Binds": ["/host/path:/container/path"]
  *   },
- *   "networks": ["tugboat"],
+ *   "networks": ["agent"],
  *   "environment": ["ENV_VAR=value"],
  *   "start": true
  * }

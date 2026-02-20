@@ -1,7 +1,5 @@
 # Agent
 
-
-
 ## Features
 
 - 💚 Health check
@@ -15,19 +13,17 @@
 docker pull serversinc/agent
 ```
 
-2. Create a `.env` file in the `./agent` directory with the following content:
-
-```env
-PORT=7567
-SECRET_KEY=your_secret_key
-CORE_URL=http://your_server:your_port/events
-DOCKER_PLATFORM=unix
-```
-
-3. Run the image:
+2. Create a `.env` file by copying the example and filling in required values:
 
 ```bash
-docker run -d -p 7567:7567 serversinc/agent --env-file /agent/.env
+cp .env.example .env
+# Edit .env and set CORE_URL and SECRET_KEY
+```
+
+3. Run the image (example):
+
+```bash
+docker run -d -p 7567:7567 --env-file /agent/.env serversinc/agent
 ```
 
 ## Usage
@@ -54,13 +50,11 @@ curl -X GET http://localhost:7567/v1/containers/:id
 
 - `PORT`: Listening port for the agent
 - `SECRET_KEY`: The secret key for authenticating requests to the agent
-- `CORE_URL`: The URL to which the agent will send events.
-- `ENABLE_HEARTBEAT`: Set to `false` to disable heartbeat functionality. Defaults to enabled if `CORE_URL` is set.
-- `HOME`: The path to the Agent directory on your host machine. This is where the agent will store its data.
+- `CORE_URL`: The URL to which the agent will send events. See `.env.example` for a full list of environment variables and defaults.
 
 ## Contributing
 
-Ensure you have a `agent` folder in your home directory, or set the `HOME` environment variable to point to your Tugboat directory.
+Ensure you have a `agent` folder in your home directory, or set the `HOME` environment variable to point to your Agent directory.
 
 1. Fork the repository
 2. Create a new branch (`git checkout -b feature`)
