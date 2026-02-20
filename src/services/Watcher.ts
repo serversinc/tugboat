@@ -142,13 +142,13 @@ export class WatcherService {
       env.map(entry => {
         const [key, ...rest] = entry.split("=");
         return [key, rest.join("=")];
-      })
+      }),
     );
 
     return {
-      application_id: map.SERVERSINC_APP_ID ?? null,
-      environment_id: map.SERVERSINC_ENV_ID ?? null,
-      deployment_id: map.SERVERSINC_DEPLOYMENT_ID ?? null,
+      application_id: map.CORE_APP_ID ?? null,
+      environment_id: map.CORE_ENV_ID ?? null,
+      deployment_id: map.CORE_DEPLOYMENT_ID ?? null,
     };
   }
 }

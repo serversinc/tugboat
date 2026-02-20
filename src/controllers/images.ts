@@ -1,6 +1,11 @@
 import { Context } from "hono";
 import { DockerService } from "../services/Docker";
 import { info } from "../utils/console";
+import { handleError } from "../utils/handleError";
+
+interface PullOptions {
+  name: string;
+}
 
 export function createImageHandlers(dockerService: DockerService) {
   if (!dockerService) throw new Error("Docker service is required");
@@ -11,7 +16,7 @@ export function createImageHandlers(dockerService: DockerService) {
       info("Image", "Listed images");
       return ctx.json(images);
     } catch (err) {
-      return ctx.json({ error: (err as Error).message }, 500);
+      return handleError(ctx, err, "Image", "list images");
     }
   }
 
@@ -21,21 +26,22 @@ export function createImageHandlers(dockerService: DockerService) {
       const image = await dockerService.getImage(id);
       return ctx.json(image);
     } catch (err) {
-      return ctx.json({ error: (err as Error).message }, 500);
+      return handleError(ctx, err, "Image", "get image", { id: ctx.req.param("id") });
     }
   }
 
   async function pull(ctx: Context) {
     try {
-      const options = (await ctx.req.json()) as { name: string };
+      const options = (await ctx.req.json()) as PullOptions;
 
+      info("Image", "Pulling image", { name: options.name });
       await dockerService.pullImage(options.name);
 
       info("Image", "Pulled image", { name: options.name });
 
       return ctx.json({ success: true, message: "image pulled", image: { name: options.name } });
     } catch (err) {
-      return ctx.json({ success: false, error: (err as Error).message }, 500);
+      return handleError(ctx, err, "Image", "pull image");
     }
   }
 
@@ -45,7 +51,7 @@ export function createImageHandlers(dockerService: DockerService) {
       await dockerService.removeImage(id);
       return ctx.json({ success: true, message: "image removed" });
     } catch (err) {
-      return ctx.json({ success: false, error: (err as Error).message }, 500);
+      return handleError(ctx, err, "Image", "remove image", { id: ctx.req.param("id") });
     }
   }
 
@@ -54,7 +60,7 @@ export function createImageHandlers(dockerService: DockerService) {
       await dockerService.pruneImages();
       return ctx.json({ success: true, message: "images pruned" });
     } catch (err) {
-      return ctx.json({ success: false, error: (err as Error).message }, 500);
+      return handleError(ctx, err, "Image", "prune images");
     }
   }
 

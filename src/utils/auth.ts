@@ -9,7 +9,7 @@ import { info, error } from "./console";
  * stores it in the .env file, and optionally sends it to CORE_URL.
  */
 export function ensureSecretKey() {
-  const envPath = "/tugboat/.env";
+  const envPath = "/agent/.env";
 
   // Check if SECRET_KEY exists in the .env file
   try {

@@ -1,50 +1,46 @@
 import pino from "pino";
+import { getRequestId } from "./requestContext";
 
-// Log level can be controlled via env var LOG_LEVEL (default: info)
-const level = process.env.LOG_LEVEL || "info";
-
-// If pretty printing is desired in non-production, pino-pretty can be used by setting
-// the environment var LOG_PRETTY=true. pino-pretty is listed as optionalDependency.
-const pretty = process.env.LOG_PRETTY === "true";
+const level  = process.env.LOGGER_LEVEL || "info";
+const pretty = process.env.LOGGER_PRETTY === "true";
 
 const pinoOptions: pino.LoggerOptions = {
   level,
 };
 
 let logger: pino.Logger;
+
 if (pretty) {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const prettyTransport = require("pino-pretty");
-  logger = pino(pinoOptions, prettyTransport({ colorize: true }));
+  try {
+    // Dynamic import only when needed
+    const prettyTransport = require("pino-pretty");
+    logger = pino(pinoOptions, prettyTransport({ colorize: true }));
+  } catch (error) {
+    console.warn("pino-pretty not installed, falling back to standard logger");
+    logger = pino(pinoOptions);
+  }
 } else {
   logger = pino(pinoOptions);
 }
 
-export function info(prefix: string, message: string, meta?: Record<string, unknown>) {
-  // include request id if available
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { getRequestId } = require("./requestContext");
+// Helper to attach request context
+function logWithContext(logFn: (obj: Record<string, unknown>, msg: string) => void, prefix: string, message: string, meta?: Record<string, unknown>) {
   const requestId = getRequestId();
-  logger.info({ prefix, requestId, ...meta }, message);
+  logFn({ prefix, requestId, ...meta }, message);
+}
+
+export function info(prefix: string, message: string, meta?: Record<string, unknown>) {
+  logWithContext(logger.info.bind(logger), prefix, message, meta);
 }
 
 export function warn(prefix: string, message: string, meta?: Record<string, unknown>) {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { getRequestId } = require("./requestContext");
-  const requestId = getRequestId();
-  logger.warn({ prefix, requestId, ...meta }, message);
+  logWithContext(logger.warn.bind(logger), prefix, message, meta);
 }
 
 export function error(prefix: string, message: string, meta?: Record<string, unknown>) {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { getRequestId } = require("./requestContext");
-  const requestId = getRequestId();
-  logger.error({ prefix, requestId, ...meta }, message);
+  logWithContext(logger.error.bind(logger), prefix, message, meta);
 }
 
 export function success(prefix: string, message: string, meta?: Record<string, unknown>) {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { getRequestId } = require("./requestContext");
-  const requestId = getRequestId();
-  logger.info({ prefix, requestId, success: true, ...meta }, message);
+  logWithContext(logger.info.bind(logger), prefix, message, { success: true, ...meta });
 }

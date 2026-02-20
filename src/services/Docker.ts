@@ -6,7 +6,6 @@ import { error, info } from "../utils/console";
 dotenv.config();
 
 export class DockerService {
-
   public name = "Docker";
 
   public docker: Docker;
@@ -71,7 +70,7 @@ export class DockerService {
           username: auth.username,
           password: auth.password,
           serveraddress: auth.registry,
-          auth: '',
+          auth: "",
         };
 
         this.docker.checkAuth(authconfig, (err: any) => {
@@ -80,10 +79,10 @@ export class DockerService {
             return reject(err);
           }
           info(this.name, "Authentication successful for image", { name });
-          });
+        });
       }
 
-      this.docker.pull(name, { 'authconfig': authconfig }, (err: any, stream: any) => {
+      this.docker.pull(name, { authconfig: authconfig }, (err: any, stream: any) => {
         if (err) {
           error(this.name, "Error pulling image", { name, error: err.message });
           return reject(err);
@@ -104,7 +103,7 @@ export class DockerService {
             if (event && event.status) {
               info(this.name, "Image pull progress", { name, status: event.status, progress: event.progress || null });
             }
-          }
+          },
         );
       });
     });

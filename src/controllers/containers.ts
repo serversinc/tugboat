@@ -1,20 +1,52 @@
 import { Context } from "hono";
-import { PassThrough } from "stream";
-import { streamSSE } from "hono/streaming";
 
 import { demultiplexDockerStream, stripAnsiCodes } from "../utils/transformers";
 import { DockerService } from "../services/Docker";
-import { info } from "../utils/console";
+import { info, error as logError } from "../utils/console";
+
+interface CreateContainerOptions {
+  name: string;
+  image: string;
+  environment?: string[];
+  labels?: Record<string, string>;
+  exposedPorts?: Record<string, object>;
+  hostConfig?: any;
+  command?: string[];
+  networks?: string[];
+  entrypoint?: string[];
+  workingdir?: string;
+  start?: boolean;
+  pullImage?: boolean;
+  auth?: {
+    username?: string;
+    password?: string;
+    registry?: string;
+  };
+}
+
+interface CommandRequest {
+  command: string | string[];
+}
 
 export function createContainerHandlers(dockerService: DockerService) {
   if (!dockerService) throw new Error("Docker service is required");
+
+  // Centralized error handler
+  function handleError(ctx: Context, err: unknown, operation: string, meta?: Record<string, unknown>) {
+    const error = err as Error;
+    logError("Container", `Failed to ${operation}`, { error: error.message, ...meta });
+    
+    const statusCode = error.message.includes("not found") ? 404 : 500;
+    
+    return ctx.json({ error: error.message }, statusCode);
+  }
 
   async function list(ctx: Context) {
     try {
       const containers = await dockerService.listContainers();
       return ctx.json(containers);
     } catch (err) {
-      return ctx.json({ error: (err as Error).message }, 500);
+      return handleError(ctx, err, "list containers");
     }
   }
 
@@ -25,18 +57,18 @@ export function createContainerHandlers(dockerService: DockerService) {
       info("Container", "Fetched container", { id });
       return ctx.json(container);
     } catch (err) {
-      return ctx.json({ error: (err as Error).message }, 500);
+      return handleError(ctx, err, "get container", { id: ctx.req.param("id") });
     }
   }
 
   async function create(ctx: Context) {
     try {
-      const options = await ctx.req.json();
+      const options = await ctx.req.json<CreateContainerOptions>();
 
-      // Check if image exists
       const imageExists = await dockerService.checkImageExists(options.image);
 
       if (!imageExists || options.pullImage) {
+        info("Container", "Pulling image", { image: options.image });
         await dockerService.pullImage(options.image, {
           username: options.auth?.username,
           password: options.auth?.password,
@@ -45,7 +77,7 @@ export function createContainerHandlers(dockerService: DockerService) {
       }
 
       const networks = options.networks || [];
-      const EndpointsConfig = networks.reduce((acc: Record<string, any>, net: string) => {
+      const EndpointsConfig = networks.reduce((acc: Record<string, { Aliases: string[] }>, net: string) => {
         if (!["host", "bridge", "none"].includes(net)) {
           acc[net] = { Aliases: [options.name] };
         }
@@ -69,10 +101,12 @@ export function createContainerHandlers(dockerService: DockerService) {
 
       if (options.start) {
         await dockerService.startContainer(container.id);
+        info("Container", "Created and started container", { id: container.id, name: options.name });
+      } else {
+        info("Container", "Created container", { id: container.id, name: options.name });
       }
 
       const containerInfo = await dockerService.getContainer(container.id);
-      info("Container", "Created container", { id: container.id, name: options.name });
 
       return ctx.json({
         success: true,
@@ -81,7 +115,7 @@ export function createContainerHandlers(dockerService: DockerService) {
         containerName: containerInfo.Name,
       });
     } catch (err) {
-      return ctx.json({ success: false, error: (err as Error).message }, 500);
+      return handleError(ctx, err, "create container");
     }
   }
 
@@ -92,7 +126,7 @@ export function createContainerHandlers(dockerService: DockerService) {
       info("Container", "Removed container", { id });
       return ctx.json({ success: true, message: "container removed", id });
     } catch (err) {
-      return ctx.json({ error: (err as Error).message }, 500);
+      return handleError(ctx, err, "remove container", { id: ctx.req.param("id") });
     }
   }
 
@@ -103,7 +137,7 @@ export function createContainerHandlers(dockerService: DockerService) {
       info("Container", "Restarted container", { id });
       return ctx.json({ success: true, message: "container restarted", id });
     } catch (err) {
-      return ctx.json({ error: (err as Error).message }, 500);
+      return handleError(ctx, err, "restart container", { id: ctx.req.param("id") });
     }
   }
 
@@ -114,7 +148,7 @@ export function createContainerHandlers(dockerService: DockerService) {
       info("Container", "Started container", { id });
       return ctx.json({ success: true, message: "container started", id });
     } catch (err) {
-      return ctx.json({ error: (err as Error).message }, 500);
+      return handleError(ctx, err, "start container", { id: ctx.req.param("id") });
     }
   }
 
@@ -125,85 +159,22 @@ export function createContainerHandlers(dockerService: DockerService) {
       info("Container", "Stopped container", { id });
       return ctx.json({ success: true, message: "container stopped", id });
     } catch (err) {
-      return ctx.json({ error: (err as Error).message }, 500);
-    }
-  }
-
-  async function logs(ctx: Context) {
-    try {
-      const id = ctx.req.param("id");
-
-      // Check for x-auth-key query parameter
-      const authKey = ctx.req.query("x-auth-key");
-      const tail = ctx.req.query("tail") || 200;
-      const requestKey = process.env.SECRET_KEY;
-
-      if (!authKey || requestKey !== authKey) {
-        return ctx.json({ error: "Unauthorized" }, 401);
-      }
-
-      const container = dockerService.docker.getContainer(id);
-
-      if (!container) {
-        return ctx.json({ error: "Container not found" }, 404);
-      }
-
-      const logs = await container.logs({
-        follow: true,
-        stdout: true,
-        stderr: true,
-        timestamps: false,
-        tail: Number(tail),
-      });
-
-      const stdout = new PassThrough();
-      const stderr = new PassThrough();
-
-      dockerService.docker.modem.demuxStream(logs, stdout, stderr);
-
-      const decoder = new TextDecoder();
-
-      return streamSSE(ctx, async stream => {
-        const stdoutPromise = (async () => {
-          for await (const chunk of stdout) {
-            const message = decoder.decode(chunk);
-            const clean = stripAnsiCodes(message);
-            await stream.writeSSE({ data: `[stdout] ${clean}` });
-          }
-        })();
-
-        const stderrPromise = (async () => {
-          for await (const chunk of stderr) {
-            const message = decoder.decode(chunk);
-            const clean = stripAnsiCodes(message);
-            await stream.writeSSE({ data: `[stderr] ${clean}` });
-          }
-        })();
-
-        await Promise.race([stdoutPromise, stderrPromise]);
-      });
-    } catch (err) {
-      return ctx.json({ error: (err as Error).message }, 500);
+      return handleError(ctx, err, "stop container", { id: ctx.req.param("id") });
     }
   }
 
   async function runCommand(ctx: Context) {
     try {
       const id = ctx.req.param("id");
-      const { command } = await ctx.req.json<{ command: string }>();
-
-      if (!command) {
-        return ctx.json({ error: "Command is required" }, 400);
-      }
+      const { command } = await ctx.req.json<CommandRequest>();
 
       const container = dockerService.docker.getContainer(id);
 
-      if (!container) {
-        return ctx.json({ error: "Container not found" }, 404);
-      }
+      // Better command parsing - handle both string and array
+      const cmdArray = Array.isArray(command) ? command : ["/bin/sh", "-c", command];
 
       const exec = await container.exec({
-        Cmd: command.split(" "),
+        Cmd: cmdArray,
         AttachStdout: true,
         AttachStderr: true,
       });
@@ -218,31 +189,19 @@ export function createContainerHandlers(dockerService: DockerService) {
       const buffer = Buffer.concat(chunks);
       const { stdout, stderr } = demultiplexDockerStream(buffer);
 
-      let cleanStdout = stripAnsiCodes(stdout).trim();
-      let cleanStderr = stripAnsiCodes(stderr).trim();
+      const cleanStdout = stripAnsiCodes(stdout).trim();
+      const cleanStderr = stripAnsiCodes(stderr).trim();
 
-      if (cleanStdout.includes("\n")) {
-        cleanStdout = cleanStdout
-          .split("\n")
-          .map(line => line.trim())
-          .join(" ");
-      }
-
-      if (cleanStderr.includes("\n")) {
-        cleanStderr = cleanStderr
-          .split("\n")
-          .map(line => line.trim())
-          .join(" ");
-      }
+      info("Container", "Executed command", { id, command });
 
       return ctx.json({
         success: true,
         message: "command executed",
-        command,
+        command: Array.isArray(command) ? command.join(" ") : command,
         output: { stdout: cleanStdout, stderr: cleanStderr },
       });
     } catch (err) {
-      return ctx.json({ error: (err as Error).message }, 500);
+      return handleError(ctx, err, "run command", { id: ctx.req.param("id") });
     }
   }
 
@@ -254,7 +213,6 @@ export function createContainerHandlers(dockerService: DockerService) {
     restart,
     start,
     stop,
-    logs,
     runCommand,
   };
 }

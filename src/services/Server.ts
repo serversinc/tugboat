@@ -16,8 +16,6 @@ export function startServer(containerHandlers: any, imageHandlers: any, networkH
 
   // Authentication middleware
   app.use("*", async (ctx, next) => {
-    const path = ctx.req.path;
-
     const authKey = process.env.SECRET_KEY;
     const requestKey = ctx.req.header("x-auth-key");
 

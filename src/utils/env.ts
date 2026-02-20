@@ -4,7 +4,7 @@ import { info } from "./console";
 
 export function checkEnv() {
   const requiredEnv = ["PORT"];
-  const optionalEnv = ["CORE_URL", "ENABLE_HEARTBEAT"];
+  const optionalEnv = ["CORE_URL"];
 
   for (const env of requiredEnv) {
     if (!process.env[env]) {

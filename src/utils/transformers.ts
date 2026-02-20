@@ -1,9 +1,4 @@
-/**
- * @description This file contains transformers for data from Dockerode
- */
-
 import { ContainerInfo } from "dockerode";
-import { networkInterfaces } from "os";
 
 /**
  * Normalizes container data from Dockerode
