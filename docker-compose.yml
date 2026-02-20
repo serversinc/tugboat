@@ -1,9 +1,9 @@
 services:
   tugboat:
     container_name: tugboat
-    image: tugboat:latest
+    build: .
     env_file:
-      - .env.local
+     - .env
     ports:
       - "7567:7567"
     volumes:

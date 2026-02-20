@@ -17,8 +17,8 @@ export class HeartbeatService {
   private lastNetStats: { rx: number; tx: number } | null = null;
 
   constructor(dockerService: DockerService) {
-    if (!process.env.TUGBOAT_PHONE_HOME_URL) {
-      warn(this.name, "TUGBOAT_PHONE_HOME_URL is not set. Heartbeat service will not start.");
+    if (!process.env.CORE_URL || process.env.TUGBOAT_ENABLE_HEARTBEAT === 'false') {
+      warn(this.name, "Heartbeat service disabled.");
       return;
     }
 

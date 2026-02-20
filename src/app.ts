@@ -4,8 +4,7 @@ import dotenv from "dotenv";
 import { Application } from "./services/Server";
 
 // Controllers
-import { ContainerController } from "./controllers/ContainerController";
-import { GithubController } from "./controllers/GithubController";
+import { createContainerHandlers } from "./containers/handlers";
 import { ImageController } from "./controllers/ImageController";
 
 // Services
@@ -29,11 +28,10 @@ const heartbeat = new HeartbeatService(dockerService);
 watcherService.start();
 heartbeat.start();
 
-const containerController = new ContainerController(dockerService);
+const containerHandlers = createContainerHandlers(dockerService);
 const networkController = new NetworkController(dockerService);
 const imageController = new ImageController(dockerService);
-const githubController = new GithubController();
 
-const application = new Application(containerController, imageController, githubController, networkController);
+const application = new Application(containerHandlers, imageController, networkController);
 
 application.start();

@@ -9,12 +9,12 @@ class HttpService {
   private readonly endpoint = "/events";
 
   constructor() {
-    if (!process.env.TUGBOAT_PHONE_HOME_URL) {
+    if (!process.env.CORE_URL) {
       return;
     }
 
     this.client = axios.create({
-      baseURL: process.env.TUGBOAT_PHONE_HOME_URL,
+      baseURL: process.env.CORE_URL,
       timeout: 5000,
     });
   }

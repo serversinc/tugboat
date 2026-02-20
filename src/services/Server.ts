@@ -4,10 +4,9 @@ import { serve } from "@hono/node-server";
 import { zValidator } from "@hono/zod-validator";
 
 import { ImageController } from "../controllers/ImageController";
-import { ContainerController } from "../controllers/ContainerController";
+import { createContainerHandlers } from "../containers/handlers";
 import { createContainerSchema } from "../validators/Containers";
-import { createImageSchema, pullImageSchema } from "../validators/Images";
-import { GithubController } from "../controllers/GithubController";
+import { pullImageSchema } from "../validators/Images";
 import { NetworkController } from "../controllers/NetworkController";
 import { createNetworkSchema } from "../validators/Networks";
 import { info } from "../utils/console";
@@ -15,7 +14,8 @@ import { info } from "../utils/console";
 export class Application {
   private app: Hono;
 
-  constructor(containerController: ContainerController, imageController: ImageController, githubController: GithubController, networkController: NetworkController) {
+  // Accept a plain containerHandlers object from the composition root
+  constructor(containerHandlers: any, imageController: ImageController, networkController: NetworkController) {
     this.app = new Hono();
 
     this.app.use(cors());
@@ -23,11 +23,6 @@ export class Application {
     // Authentication middleware
     this.app.use("*", async (ctx, next) => {
       const path = ctx.req.path;
-      // Logs endpoint checks auth from query params
-      if (path.startsWith("/containers/") && path.endsWith("/logs")) {
-        await next();
-        return;
-      }
 
       const authKey = process.env.TUGBOAT_SECRET_KEY;
       const requestKey = ctx.req.header("x-auth-key");
@@ -39,24 +34,20 @@ export class Application {
       await next();
     });
 
-    // Containers
-    this.app.get("/containers", containerController.list.bind(containerController));
-    this.app.get("/containers/:id", containerController.get.bind(containerController));
-    this.app.post("/containers", zValidator("json", createContainerSchema), containerController.create.bind(containerController));
-    this.app.delete("/containers/:id", containerController.remove.bind(containerController));
+    // Containers (containerHandlers is a plain object of functions)
+    this.app.get("/containers", containerHandlers.list);
+    this.app.get("/containers/:id", containerHandlers.get);
+    this.app.post("/containers", zValidator("json", createContainerSchema), containerHandlers.create);
+    this.app.delete("/containers/:id", containerHandlers.remove);
 
     // Container actions
-    this.app.post("/containers/:id/start", containerController.start.bind(containerController));
-    this.app.post("/containers/:id/stop", containerController.stop.bind(containerController));
-    this.app.post("/containers/:id/restart", containerController.restart.bind(containerController));
-    this.app.post("/containers/:id/command", containerController.runCommand.bind(containerController));
-
-    // Logs
-    this.app.get("/containers/:id/logs", containerController.logs.bind(containerController));
+    this.app.post("/containers/:id/start", containerHandlers.start);
+    this.app.post("/containers/:id/stop", containerHandlers.stop);
+    this.app.post("/containers/:id/restart", containerHandlers.restart);
+    this.app.post("/containers/:id/command", containerHandlers.runCommand);
 
     // Images
     this.app.get("/images", imageController.list.bind(imageController));
-    this.app.post("/images", zValidator("json", createImageSchema), imageController.create.bind(imageController));
     this.app.get("/images/:id", imageController.get.bind(imageController));
     this.app.post("/images/pull", zValidator("json", pullImageSchema), imageController.pull.bind(imageController));
     this.app.delete("/images/:id", imageController.remove.bind(imageController));
@@ -66,9 +57,6 @@ export class Application {
     this.app.get("/networks/:id", networkController.get.bind(networkController));
     this.app.post("/networks", zValidator("json", createNetworkSchema), networkController.create.bind(networkController));
     this.app.delete("/networks/:id", networkController.remove.bind(networkController));
-
-    // Github
-    this.app.post("/github/pull", githubController.pull.bind(githubController));
   }
 
   start() {
@@ -79,7 +67,7 @@ export class Application {
       },
       data => {
         info("Hono", `Server started on port ${data.port}`);
-      }
+      },
     );
   }
 }

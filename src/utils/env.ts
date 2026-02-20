@@ -4,7 +4,7 @@ import { info } from "./console";
 
 export function checkEnv() {
   const requiredEnv = ["TUGBOAT_PORT"];
-  const optionalEnv = ["TUGBOAT_PHONE_HOME_URL"];
+  const optionalEnv = ["CORE_URL", "TUGBOAT_ENABLE_HEARTBEAT"];
 
   for (const env of requiredEnv) {
     if (!process.env[env]) {
