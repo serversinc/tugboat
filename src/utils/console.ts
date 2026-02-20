@@ -1,8 +1,10 @@
 import pino from "pino";
-import { getRequestId } from "./requestContext";
+import { getRequestId } from "./context";
 
-const level  = process.env.LOGGER_LEVEL || "info";
-const pretty = process.env.LOGGER_PRETTY === "true";
+import config from "../config";
+
+const level  = config.LOGGER_LEVEL || "info";
+const pretty = config.LOGGER_PRETTY === true;
 
 const pinoOptions: pino.LoggerOptions = {
   level,

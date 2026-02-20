@@ -1,7 +1,7 @@
 import { Context } from "hono";
 import { DockerService } from "../services/Docker";
 import { info } from "../utils/console";
-import { handleError } from "../utils/handleError";
+import { handleError } from "../utils/error";
 
 export function createNetworkHandlers(dockerService: DockerService) {
   if (!dockerService) throw new Error("Docker service is required");

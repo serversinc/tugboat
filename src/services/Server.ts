@@ -6,8 +6,10 @@ import { zValidator } from "@hono/zod-validator";
 import { createContainerSchema } from "../validators/Containers";
 import { pullImageSchema } from "../validators/Images";
 import { createNetworkSchema } from "../validators/Networks";
+
 import { info } from "../utils/console";
-import { runWithRequestContext } from "../utils/requestContext";
+import { runWithRequestContext } from "../utils/context";
+import config from "../config";
 
 export function startServer(containerHandlers: any, imageHandlers: any, networkHandlers: any, port?: number) {
   const app = new Hono();
@@ -16,7 +18,7 @@ export function startServer(containerHandlers: any, imageHandlers: any, networkH
 
   // Authentication middleware
   app.use("*", async (ctx, next) => {
-    const authKey = process.env.SECRET_KEY;
+    const authKey = config.SECRET_KEY;
     const requestKey = ctx.req.header("x-auth-key");
 
     if (!authKey || requestKey !== authKey) {
@@ -64,7 +66,7 @@ export function startServer(containerHandlers: any, imageHandlers: any, networkH
 
   serve(
     {
-      port: port || (process.env.PORT ? parseInt(process.env.PORT) : 3000),
+      port: port || config.PORT,
       fetch: app.fetch.bind(app),
     },
     data => {
