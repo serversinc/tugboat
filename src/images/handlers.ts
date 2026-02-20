@@ -7,6 +7,7 @@ export function createImageHandlers(dockerService: DockerService) {
   async function list(ctx: Context) {
     try {
       const images = await dockerService.listImages();
+      info("Image", "Listed images");
       return ctx.json(images);
     } catch (err) {
       return ctx.json({ error: (err as Error).message }, 500);
@@ -28,6 +29,8 @@ export function createImageHandlers(dockerService: DockerService) {
       const options = (await ctx.req.json()) as { name: string };
 
       await dockerService.pullImage(options.name);
+
+      info("Image", "Pulled image", { name: options.name });
 
       return ctx.json({ success: true, message: `image pulled: ${options.name}` });
     } catch (err) {

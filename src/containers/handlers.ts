@@ -21,6 +21,7 @@ export function createContainerHandlers(dockerService: DockerService) {
     try {
       const id = ctx.req.param("id");
       const container = await dockerService.getContainer(id);
+      info("Container", "Fetched container", { id });
       return ctx.json(container);
     } catch (err) {
       return ctx.json({ error: (err as Error).message }, 500);
@@ -70,6 +71,7 @@ export function createContainerHandlers(dockerService: DockerService) {
       }
 
       const containerInfo = await dockerService.getContainer(container.id);
+      info("Container", "Created container", { id: container.id, name: options.name });
 
       return ctx.json({
         success: true,
@@ -85,6 +87,7 @@ export function createContainerHandlers(dockerService: DockerService) {
     try {
       const id = ctx.req.param("id");
       await dockerService.removeContainer(id);
+      info("Container", "Removed container", { id });
       return ctx.json({ message: "Container removed" });
     } catch (err) {
       return ctx.json({ error: (err as Error).message }, 500);
@@ -95,6 +98,7 @@ export function createContainerHandlers(dockerService: DockerService) {
     try {
       const id = ctx.req.param("id");
       await dockerService.restartContainer(id);
+      info("Container", "Restarted container", { id });
       return ctx.json({ message: "Container restarted" });
     } catch (err) {
       return ctx.json({ error: (err as Error).message }, 500);
@@ -105,6 +109,7 @@ export function createContainerHandlers(dockerService: DockerService) {
     try {
       const id = ctx.req.param("id");
       await dockerService.startContainer(id);
+      info("Container", "Started container", { id });
       return ctx.json({ message: "Container started" });
     } catch (err) {
       return ctx.json({ error: (err as Error).message }, 500);
@@ -115,6 +120,7 @@ export function createContainerHandlers(dockerService: DockerService) {
     try {
       const id = ctx.req.param("id");
       await dockerService.stopContainer(id);
+      info("Container", "Stopped container", { id });
       return ctx.json({ message: "Container stopped" });
     } catch (err) {
       return ctx.json({ error: (err as Error).message }, 500);

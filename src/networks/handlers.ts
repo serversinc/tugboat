@@ -7,6 +7,7 @@ export function createNetworkHandlers(dockerService: DockerService) {
   async function list(ctx: Context) {
     try {
       const networks = await dockerService.docker.listNetworks();
+      info("Network", "Listed networks");
       return ctx.json(networks);
     } catch (err) {
       return ctx.json({ error: (err as Error).message }, 500);
@@ -40,6 +41,7 @@ export function createNetworkHandlers(dockerService: DockerService) {
       });
 
       const data = await network.inspect();
+      info("Network", "Created network", { name: options.name });
       return ctx.json(data, 201);
     } catch (err) {
       return ctx.json({ error: (err as Error).message }, 400);
@@ -51,6 +53,7 @@ export function createNetworkHandlers(dockerService: DockerService) {
       const id = ctx.req.param("id");
       const network = dockerService.docker.getNetwork(id);
       await network.remove();
+      info("Network", "Removed network", { id });
       return ctx.json({ message: "Network removed." });
     } catch (err) {
       return ctx.json({ error: (err as Error).message }, 400);

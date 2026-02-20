@@ -20,18 +20,18 @@ if (pretty) {
   logger = pino(pinoOptions);
 }
 
-export function info(prefix: string, message: string) {
-  logger.info({ prefix }, message);
+export function info(prefix: string, message: string, meta?: Record<string, unknown>) {
+  logger.info({ prefix, ...meta }, message);
 }
 
-export function warn(prefix: string, message: string) {
-  logger.warn({ prefix }, message);
+export function warn(prefix: string, message: string, meta?: Record<string, unknown>) {
+  logger.warn({ prefix, ...meta }, message);
 }
 
-export function error(prefix: string, message: string) {
-  logger.error({ prefix }, message);
+export function error(prefix: string, message: string, meta?: Record<string, unknown>) {
+  logger.error({ prefix, ...meta }, message);
 }
 
-export function success(prefix: string, message: string) {
-  logger.info({ prefix, success: true }, message);
+export function success(prefix: string, message: string, meta?: Record<string, unknown>) {
+  logger.info({ prefix, success: true, ...meta }, message);
 }
