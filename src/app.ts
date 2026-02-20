@@ -1,7 +1,7 @@
 import dotenv from "dotenv";
 
 // Hono Server
-import { Application } from "./services/Server";
+import { startServer } from "./services/Server";
 
 // Controllers
 import { createContainerHandlers } from "./containers/handlers";
@@ -32,6 +32,4 @@ const containerHandlers = createContainerHandlers(dockerService);
 const imageHandlers = createImageHandlers(dockerService);
 const networkHandlers = createNetworkHandlers(dockerService);
 
-const application = new Application(containerHandlers, imageHandlers, networkHandlers);
-
-application.start();
+startServer(containerHandlers, imageHandlers, networkHandlers);
