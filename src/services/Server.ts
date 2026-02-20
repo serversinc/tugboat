@@ -7,6 +7,7 @@ import { createContainerSchema } from "../validators/Containers";
 import { pullImageSchema } from "../validators/Images";
 import { createNetworkSchema } from "../validators/Networks";
 import { info } from "../utils/console";
+import { runWithRequestContext } from "../utils/requestContext";
 
 export function startServer(containerHandlers: any, imageHandlers: any, networkHandlers: any, port?: number) {
   const app = new Hono();
@@ -27,19 +28,16 @@ export function startServer(containerHandlers: any, imageHandlers: any, networkH
     await next();
   });
 
-  // Request ID middleware
+  // Request ID middleware — wrap the downstream execution so AsyncLocalStorage context propagates
   app.use("*", async (ctx, next) => {
     const requestId = ctx.req.header("x-request-id") || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    // attach to context store for access in handlers
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { runWithRequestContext } = require("../utils/requestContext");
-    runWithRequestContext({ requestId }, () => {});
-    // store request-id in Hono request context for handlers that read it
-    // Hono's ctx.req doesn't have a typed set function for custom keys, use ctx.set
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    ctx.set("request-id", requestId);
-    await next();
+    return runWithRequestContext({ requestId }, async () => {
+      // store request-id in Hono request context for handlers that read it
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      ctx.set("request-id", requestId);
+      await next();
+    });
   });
 
   // Containers (containerHandlers is a plain object of functions)
