@@ -1,12 +1,6 @@
 import axios, { AxiosInstance, AxiosError } from "axios";
 import { warn, error as logError, info } from "../utils/console";
-import appConfig from "../config";
-
-interface HttpServiceConfig {
-  baseURL?: string;
-  timeout?: number;
-  secretKey?: string;
-}
+import config from "../config";
 
 interface EventPayload {
   type: string;
@@ -19,9 +13,9 @@ class HttpService {
   private readonly serviceName = "Http";
 
   constructor() {
-    const baseURL   = appConfig.CORE_URL;
-    const timeout   = appConfig.HTTP_TIMEOUT;
-    const secretKey = appConfig.SECRET_KEY;
+    const baseURL   = config.CORE_URL;
+    const timeout   = config.HTTP_TIMEOUT;
+    const secretKey = config.SECRET_KEY;
 
     this.client = axios.create({
       baseURL,
